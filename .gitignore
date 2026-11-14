@@ -1,0 +1,8 @@
+.claude/
+.taste-skill/
+__pycache__/
+*.pyc
+gecko-tracker/seed.html
+# never commit a running service's data or its push key
+data/
+vapid_private.pem

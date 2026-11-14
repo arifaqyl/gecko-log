@@ -1,0 +1,1830 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gecko Log</title>
+<meta name="description" content="Meals, sheds, weigh-ins and tank checks for your leopard gecko.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Gecko Log">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+/*
+  Gecko Log design tokens.
+  Palette: skin #F5C242 (the gecko's yellow, used as a field and on data), spot #231B14 (ink, the gecko's spots),
+  ground #FFFFFF, surface #F3F3F1 (neutral tone step), muted #5E5B57. Status: green #247B50, red #B42318.
+  One typeface: Bricolage Grotesque. Spacing on a 4px base, one gap of 16px.
+*/
+:root{
+  --ground:#ffffff; --surface:#f3f3f1; --raised:#ffffff; --active:#e9e8e5;
+  --border:#e6e5e1; --rule:#efeeeb; --control:#cfcdc8;
+  --text:#231b14; --muted:#5e5b57;
+  --skin:#f5c242; --skin-ink:#231b14; --spot:#231b14; --skin-soft:#fbe7b0;
+  --primary:#231b14; --on-primary:#ffffff;
+  --positive:#247b50; --negative:#b42318; --warning:#92400e;
+  --pill-pos-bg:#dcfae5; --pill-pos-ink:#04250e; --pill-neg-bg:#fdecea; --pill-neg-ink:#7a1d14;
+  --pill-warn-bg:#fff4d6; --pill-warn-ink:#7a3a06; --pill-neu-bg:#efeeeb; --pill-neu-ink:#3d3a36;
+  --grid:#e7e6e2; --scrim:rgba(20,16,12,.48);
+  --r-card:20px; --r-row:14px; --r-ctl:999px;
+  --pad:20px; --side:16px; --navh:64px; --ctl:44px;
+  --font:"Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1); --t-fast:120ms; --t-mid:220ms; --t-sheet:360ms;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#121110; --surface:#1d1c1a; --raised:#25231f; --active:#2c2a27;
+    --border:#2a2825; --rule:#22201e; --control:#4a4742;
+    --text:#f4f1ec; --muted:#b6b0a8;
+    --skin:#f2bd3b; --skin-soft:#3b3020;
+    --primary:#f5f5f5; --on-primary:#121110;
+    --positive:#3fc07a; --negative:#f06a5c; --warning:#f2a845;
+    --pill-pos-bg:#172a1d; --pill-pos-ink:#3fc07a; --pill-neg-bg:#331b18; --pill-neg-ink:#f58a7e;
+    --pill-warn-bg:#33260f; --pill-warn-ink:#f2b45c; --pill-neu-bg:#262421; --pill-neu-ink:#cfc9c1;
+    --grid:#2b2926; --scrim:rgba(0,0,0,.62);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#121110; --surface:#1d1c1a; --raised:#25231f; --active:#2c2a27;
+  --border:#2a2825; --rule:#22201e; --control:#4a4742;
+  --text:#f4f1ec; --muted:#b6b0a8;
+  --skin:#f2bd3b; --skin-soft:#3b3020;
+  --primary:#f5f5f5; --on-primary:#121110;
+  --positive:#3fc07a; --negative:#f06a5c; --warning:#f2a845;
+  --pill-pos-bg:#172a1d; --pill-pos-ink:#3fc07a; --pill-neg-bg:#331b18; --pill-neg-ink:#f58a7e;
+  --pill-warn-bg:#33260f; --pill-warn-ink:#f2b45c; --pill-neu-bg:#262421; --pill-neu-ink:#cfc9c1;
+  --grid:#2b2926; --scrim:rgba(0,0,0,.62);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;background:var(--ground)}
+/* Never let the page slide sideways on phones (iOS Safari pans the page if anything pokes out). */
+html,body{overflow-x:hidden;overscroll-behavior-x:none}
+@supports (overflow-x:clip){html,body{overflow-x:clip}}
+@media (pointer: fine){html{overscroll-behavior:none}}
+body{margin:0;background:var(--ground);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.45;font-weight:400;
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;touch-action:manipulation;min-height:100dvh}
+h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+p{margin:0}
+button,input,textarea,select{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:8px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:8px;top:-60px;z-index:100;background:var(--primary);color:var(--on-primary);padding:10px 14px;border-radius:10px}
+.skip:focus{top:8px}
+
+.app{max-width:560px;margin:0 auto;padding:0 var(--side) calc(var(--navh) + env(safe-area-inset-bottom) + 40px)}
+.app:focus{outline:none}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;height:56px;margin-top:env(safe-area-inset-top)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;letter-spacing:-.01em}
+.brand svg{width:26px;height:26px}
+.who{display:flex;gap:8px}
+.who button{width:36px;height:36px;border-radius:50%;padding:0;position:relative;transition:transform var(--t-fast) var(--ease)}
+.who button::after{content:"";position:absolute;inset:-4px}
+.who button:active{transform:scale(.92)}
+.who button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ground),0 0 0 4px var(--text)}
+.av{display:block;width:100%;height:100%;border-radius:50%;overflow:hidden;background:var(--skin)}
+.av img,.av svg{width:100%;height:100%;object-fit:cover;display:block}
+
+.title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:12px 0 20px}
+.title h1{font-size:30px;line-height:1.05}
+.title .sub{font-size:15px;color:var(--muted);margin-top:4px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:var(--ctl);padding:0 18px;border-radius:var(--r-ctl);
+  font-weight:600;font-size:15px;white-space:nowrap;transition:transform var(--t-fast) var(--ease),background-color var(--t-fast) linear,opacity var(--t-fast) linear}
+.btn:active{transform:scale(.96)}
+.btn svg{width:18px;height:18px;flex:none}
+.btn-primary{background:var(--primary);color:var(--on-primary)}
+.btn-primary:hover{opacity:.88}
+.btn-quiet{background:var(--surface);color:var(--text)}
+.btn-quiet:hover{background:var(--active)}
+.btn-danger{background:var(--pill-neg-bg);color:var(--pill-neg-ink)}
+.btn-wide{width:100%}
+.link{color:var(--text);font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;padding:10px 0}
+.link:hover{text-decoration-thickness:2.5px}
+
+/* the skin: gecko-yellow field, every spot a meal */
+.skin{background:var(--skin);color:var(--skin-ink);margin:4px calc(-1 * var(--side)) 0;padding:24px var(--side) 18px}
+@media (min-width:592px){.skin{margin-left:0;margin-right:0;border-radius:var(--r-card)}}
+.skin-head{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}
+.skin h1{font-size:46px;line-height:.95;letter-spacing:-.04em;font-weight:800;overflow-wrap:anywhere}
+.skin .finding{font-size:17px;line-height:1.35;margin-top:10px;max-width:30ch;font-weight:500}
+.portrait{width:84px;height:84px;border-radius:50%;overflow:hidden;background:var(--skin-soft);flex:none;box-shadow:0 0 0 3px var(--skin-ink);transition:transform var(--t-fast) var(--ease)}
+.portrait:active{transform:scale(.95)}
+.portrait img,.portrait svg{width:100%;height:100%;object-fit:cover;display:block}
+.meals{margin-top:22px}
+.meals-grid{display:grid;grid-template-columns:repeat(14,1fr);gap:2px;align-items:end}
+.meal{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0 4px;border-radius:10px;min-height:52px;justify-content:flex-end;
+  transition:background-color var(--t-fast) linear}
+.meal svg{width:100%;max-width:26px;height:26px;overflow:visible}
+.meal .d{font-size:11px;line-height:1;font-weight:600;opacity:.72}
+.meal[aria-pressed="true"]{background:rgba(35,27,20,.13)}
+.meal.today .d{opacity:1;font-weight:800}
+.meal-say{margin-top:10px;font-size:14px;font-weight:500;min-height:20px}
+.spot-in{animation:spotIn 560ms var(--ease) both}
+@keyframes spotIn{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* log buttons: "Log a meal" full width, then the rest in a 3-column grid, so nothing scrolls sideways */
+.do{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 0}
+.do .btn{padding:0 10px;min-width:0}
+.do .btn-primary{grid-column:1/-1}
+
+.sec{margin-top:32px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 2px 10px;min-height:32px}
+.sec-head h2{font-size:19px}
+.panel{background:var(--surface);border-radius:var(--r-card);padding:8px}
+
+.rows{display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:60px;padding:10px 14px;background:var(--raised);border-radius:var(--r-row);width:100%;
+  transition:transform var(--t-fast) var(--ease)}
+button.row:active{transform:scale(.985)}
+.row .t{display:block;font-weight:600;font-size:15px;line-height:1.25}
+.row .s{display:block;font-size:13px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{flex:none;white-space:nowrap;font-size:12px;font-weight:600;line-height:1;padding:6px 10px;border-radius:999px}
+.pill.pos{background:var(--pill-pos-bg);color:var(--pill-pos-ink)}
+.pill.neg{background:var(--pill-neg-bg);color:var(--pill-neg-ink)}
+.pill.warn{background:var(--pill-warn-bg);color:var(--pill-warn-ink)}
+.pill.neu{background:var(--pill-neu-bg);color:var(--pill-neu-ink)}
+
+.notice{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:14px 16px;border-radius:var(--r-row);margin-top:12px}
+.notice.act{grid-template-columns:auto 1fr auto;align-items:center}
+.notice.neg{background:var(--pill-neg-bg);color:var(--pill-neg-ink)}
+.notice.warn{background:var(--pill-warn-bg);color:var(--pill-warn-ink)}
+.notice.pos{background:var(--pill-pos-bg);color:var(--pill-pos-ink)}
+.notice svg{width:20px;height:20px;margin-top:1px}
+.notice b{display:block;font-weight:700}
+.notice p{font-size:14px;margin-top:2px}
+.notice .btn{height:36px;padding:0 14px}
+
+.figs{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border-radius:var(--r-card);overflow:hidden}
+.fig{padding:16px var(--pad) 18px;min-width:0}
+.fig:nth-child(odd){box-shadow:inset -1px 0 0 var(--border)}
+.fig:nth-child(n+3){box-shadow:inset 0 1px 0 var(--border)}
+.fig:nth-child(3){box-shadow:inset 0 1px 0 var(--border),inset -1px 0 0 var(--border)}
+.fig .k{font-size:13px;color:var(--muted);font-weight:500}
+.fig .v{font-size:28px;line-height:1.1;margin-top:4px;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fig .v small{font-size:15px;color:var(--muted);font-weight:500;letter-spacing:0;margin-left:3px}
+.fig .c{font-size:13px;margin-top:4px;color:var(--muted)}
+.fig .c.pos{color:var(--positive)} .fig .c.neg{color:var(--negative)}
+
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.chip{flex:none;height:40px;padding:0 14px;border-radius:999px;background:var(--surface);font-weight:600;font-size:14px;transition:background-color var(--t-fast) linear}
+.chip:hover{background:var(--active)}
+.chip[aria-pressed="true"]{background:var(--primary);color:var(--on-primary)}
+.day{font-size:14px;font-weight:600;color:var(--muted);margin:22px 4px 8px}
+.list{background:var(--surface);border-radius:var(--r-card);padding:4px}
+.entry{display:grid;grid-template-columns:56px 1fr;gap:8px;align-items:start;padding:12px 14px;width:100%;min-height:56px;border-radius:var(--r-row);transition:background-color var(--t-fast) linear}
+.entry+.entry{box-shadow:inset 0 1px 0 var(--border)}
+.entry:hover{background:var(--active)}
+.entry .time{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;padding-top:2px}
+.entry .t{display:block;font-weight:600;font-size:15px;line-height:1.3}
+.entry .s{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.empty{background:var(--surface);border-radius:var(--r-card);padding:20px;color:var(--muted);font-size:15px}
+.empty b{color:var(--text);display:block;font-size:16px;margin-bottom:4px}
+
+.chart{display:block;width:100%;height:auto;overflow:visible;touch-action:pan-y}
+.chart .grid{stroke:var(--grid);stroke-width:1}
+.chart .base{stroke:var(--control);stroke-width:1.5}
+.chart .tick{fill:var(--muted);font-size:11px;font-family:var(--font);font-variant-numeric:tabular-nums}
+.chart .line{fill:none;stroke:var(--text);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chart .area{fill:var(--skin);opacity:.4}
+.chart .hit{fill:transparent;cursor:crosshair}
+.chart .hover{fill:var(--skin);stroke:var(--text);stroke-width:2}
+.seg{display:inline-flex;background:var(--surface);border-radius:999px;padding:3px}
+.seg button{height:34px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);min-width:42px}
+.seg button[aria-pressed="true"]{background:var(--raised);color:var(--text);box-shadow:0 0 0 1px var(--border)}
+.cal{background:var(--skin);color:var(--skin-ink);border-radius:var(--r-card);padding:16px}
+.cal-grid{display:grid;grid-template-columns:22px repeat(12,1fr);gap:3px 2px;align-items:center}
+.cal-grid .dl{font-size:11px;font-weight:600;opacity:.72}
+.cal-grid svg{width:100%;height:22px;overflow:visible;display:block}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:13px;font-weight:500}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key svg{width:16px;height:16px}
+.feeders .fr{display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;padding:8px}
+.feeders .fr svg{width:30px;height:30px}
+.feeders .bar2{height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
+.feeders .bar2 i{display:block;height:100%;background:var(--muted)}
+.feeders .fr:first-child .bar2 i{background:var(--text)}
+.feeders .n{font-variant-numeric:tabular-nums;font-weight:600}
+
+.gk{display:grid;grid-template-columns:56px 1fr auto;gap:14px;align-items:center;padding:12px;width:100%;border-radius:var(--r-row);background:var(--raised);transition:transform var(--t-fast) var(--ease)}
+.gk:active{transform:scale(.985)}
+.gk .av{width:56px;height:56px}
+.gk .n{display:block;font-weight:700;font-size:18px}
+.gk .s{display:block;font-size:13px;color:var(--muted)}
+.gk svg.chev{width:18px;height:18px;color:var(--muted)}
+details.guide{background:var(--surface);border-radius:var(--r-row)}
+details.guide+details.guide{margin-top:6px}
+details.guide summary{list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;font-weight:600;cursor:pointer;border-radius:var(--r-row)}
+details.guide summary::-webkit-details-marker{display:none}
+details.guide summary svg{width:18px;height:18px;color:var(--muted);transition:transform var(--t-mid) var(--ease)}
+details.guide[open] summary svg{transform:rotate(90deg)}
+details.guide .body{padding:0 16px 16px;font-size:15px}
+details.guide ul{margin:0;padding-left:18px}
+details.guide li{margin:6px 0}
+.set{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;min-height:60px;padding:10px 16px}
+.set+.set{box-shadow:inset 0 1px 0 var(--border)}
+.set .t{font-weight:600;font-size:15px}
+.set .s{font-size:13px;color:var(--muted);margin-top:2px}
+
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--ground);box-shadow:inset 0 1px 0 var(--border);padding-bottom:env(safe-area-inset-bottom)}
+.nav-in{max-width:560px;margin:0 auto;height:var(--navh);display:grid;grid-template-columns:repeat(5,1fr);align-items:center;padding:0 6px}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:56px;font-size:11px;font-weight:600;color:var(--muted);text-decoration:none;border-radius:14px}
+.tab .ic{display:grid;place-items:center;width:52px;height:30px;border-radius:999px;transition:background-color var(--t-mid) linear,transform var(--t-fast) var(--ease)}
+.tab svg{width:22px;height:22px}
+.tab:hover{color:var(--text)}
+.tab[aria-current="page"]{color:var(--text)}
+.tab[aria-current="page"] .ic{background:var(--active)}
+.tab-log{color:var(--text)}
+.tab-log .ic{background:var(--primary);color:var(--on-primary);height:34px}
+.tab:active .ic{transform:scale(.9)}
+
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:40;opacity:0;visibility:hidden;pointer-events:none;transition:opacity var(--t-sheet) var(--ease),visibility 0s linear var(--t-sheet)}
+.scrim.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity var(--t-sheet) var(--ease),visibility 0s}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-width:560px;margin:0 auto;background:var(--ground);border-radius:24px 24px 0 0;max-height:94dvh;
+  display:flex;flex-direction:column;transform:translateY(102%);visibility:hidden;transition:transform var(--t-sheet) var(--ease),visibility 0s linear var(--t-sheet);
+  box-shadow:0 -12px 40px rgba(0,0,0,.18);overscroll-behavior:contain}
+.sheet.on{transform:none;visibility:visible;transition:transform var(--t-sheet) var(--ease),visibility 0s}
+.grab{width:40px;height:5px;border-radius:9px;background:var(--control);margin:8px auto 0}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px 4px 20px}
+.sheet-head h2{font-size:22px}
+.x{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:none}
+.x:hover{background:var(--active)}
+.x svg{width:18px;height:18px}
+.sheet-body{overflow-y:auto;padding:4px 20px 20px;overscroll-behavior:contain}
+.sheet-foot{display:flex;gap:10px;padding:12px 20px calc(env(safe-area-inset-bottom) + 14px);box-shadow:inset 0 1px 0 var(--border)}
+.sheet-foot .btn-primary{flex:1}
+
+.field{margin-top:20px}
+.field>.lab,.field>label{display:block;font-weight:600;font-size:14px;margin:0 0 8px}
+.help{font-size:13px;color:var(--muted);margin-top:8px}
+.inp{width:100%;height:48px;background:var(--raised);border:1px solid var(--control);border-radius:12px;padding:0 14px;font-size:16px;transition:border-color var(--t-fast) linear}
+.inp:focus{border-color:var(--text);outline:none;box-shadow:0 0 0 1px var(--text)}
+textarea.inp{height:auto;min-height:88px;padding:12px 14px;resize:vertical;line-height:1.4}
+.inp::placeholder,.big input::placeholder,.reading input::placeholder{color:var(--muted);opacity:1}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{min-height:var(--ctl);padding:0 16px;border-radius:999px;background:var(--surface);font-weight:600;font-size:15px;display:inline-flex;align-items:center;gap:8px;
+  transition:background-color var(--t-fast) linear,transform var(--t-fast) var(--ease)}
+.opt:hover{background:var(--active)}
+.opt:active{transform:scale(.96)}
+.opt[aria-pressed="true"]{background:var(--primary);color:var(--on-primary)}
+.opt .due{font-size:11px;font-weight:700;background:var(--skin);color:var(--skin-ink);padding:3px 7px;border-radius:999px}
+.bugs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.bug{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px 10px;border-radius:16px;background:var(--surface);font-size:12px;font-weight:600;line-height:1.15;text-align:center;
+  min-height:84px;transition:background-color var(--t-fast) linear,transform var(--t-fast) var(--ease)}
+.bug svg{width:34px;height:34px}
+.bug:hover{background:var(--active)}
+.bug:active{transform:scale(.95)}
+.bug[aria-pressed="true"]{background:var(--skin);color:var(--skin-ink)}
+.counts{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.count{display:grid;grid-template-columns:28px 1fr auto auto auto;gap:10px;align-items:center;background:var(--surface);border-radius:14px;padding:6px 6px 6px 12px}
+.count svg{width:26px;height:26px}
+.count .nm{font-weight:600}
+.count .n{min-width:30px;text-align:center;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.step{width:44px;height:44px;border-radius:12px;background:var(--raised);display:grid;place-items:center;transition:transform var(--t-fast) var(--ease)}
+.step:active{transform:scale(.9)}
+.step svg{width:18px;height:18px}
+.big{display:flex;align-items:baseline;justify-content:center;gap:6px;background:var(--surface);border-radius:var(--r-card);padding:14px}
+.big input{width:170px;border:0;background:none;outline:none;text-align:right;font-size:56px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.big span{font-size:24px;font-weight:600;color:var(--muted)}
+.big:focus-within{box-shadow:0 0 0 2px var(--text)}
+.tails{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tail{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 2px 8px;border-radius:14px;background:var(--surface);font-size:12px;font-weight:600;min-height:84px;text-align:center;line-height:1.15}
+.tail svg{width:40px;height:44px}
+.tail[aria-pressed="true"]{background:var(--skin);color:var(--skin-ink)}
+.readings{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.reading{background:var(--surface);border-radius:16px;padding:10px 10px 12px;text-align:center}
+.reading label{display:block;font-size:13px;font-weight:600;color:var(--muted)}
+.reading input{width:100%;border:0;background:none;outline:none;text-align:center;font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+.reading .ok{font-size:12px;font-weight:600;color:var(--muted)}
+.reading.good{box-shadow:inset 0 0 0 2px var(--positive)} .reading.good .ok{color:var(--positive)}
+.reading.off{box-shadow:inset 0 0 0 2px var(--warning)} .reading.off .ok{color:var(--warning)}
+.reading:focus-within{box-shadow:inset 0 0 0 2px var(--text)}
+.tip{padding:12px 14px;border-radius:14px;background:var(--surface);font-size:14px;margin-top:12px}
+.tip.neg{background:var(--pill-neg-bg);color:var(--pill-neg-ink)}
+.tip.warn{background:var(--pill-warn-bg);color:var(--pill-warn-ink)}
+.photo{display:block;width:104px;height:104px;margin:4px auto 0;border-radius:50%;overflow:hidden;background:var(--skin)}
+.photo img,.photo svg{width:100%;height:100%;object-fit:cover;display:block}
+.add-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.add-grid button{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:16px;min-height:96px;padding:14px;border-radius:16px;background:var(--surface);font-weight:600;
+  transition:transform var(--t-fast) var(--ease),background-color var(--t-fast) linear}
+.add-grid button:hover{background:var(--active)}
+.add-grid button:first-child{background:var(--skin);color:var(--skin-ink)}
+.add-grid button:active{transform:scale(.96)}
+.add-grid svg{width:28px;height:28px}
+
+.hello{min-height:100dvh;display:flex;flex-direction:column;background:var(--skin);color:var(--skin-ink);margin:0 calc(-1 * var(--side)) calc(-1 * (var(--navh) + 40px));padding:calc(env(safe-area-inset-top) + 24px) 24px calc(env(safe-area-inset-bottom) + 28px)}
+.hello .art{flex:1;display:grid;place-items:center;min-height:280px}
+.hello .art svg{width:min(56vw,230px);height:auto;animation:sway 6s ease-in-out infinite;transform-origin:50% 60%}
+.hello h1{font-size:48px;line-height:.95;letter-spacing:-.04em;font-weight:800}
+.hello p{font-size:18px;margin-top:12px;max-width:28ch;font-weight:500}
+.hello .btn-primary{margin-top:28px;height:54px;font-size:17px;background:var(--skin-ink);color:#fff}
+.hello .link{color:var(--skin-ink);margin-top:8px;align-self:center}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 14px);z-index:60;transform:translate(-50%,16px);opacity:0;pointer-events:none;
+  background:var(--primary);color:var(--on-primary);border-radius:14px;padding:0 6px 0 16px;min-height:48px;display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;
+  transition:opacity var(--t-mid) var(--ease),transform var(--t-mid) var(--ease),visibility 0s linear var(--t-mid);visibility:hidden;max-width:calc(100vw - 32px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.on{opacity:1;visibility:visible;transform:translate(-50%,0);pointer-events:auto}
+.toast button{height:40px;padding:0 12px;border-radius:10px;color:var(--skin);font-weight:700}
+.toast .msg{padding:12px 10px 12px 0}
+
+/* photos */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ph{position:relative;display:block;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--surface);transition:transform var(--t-fast) var(--ease)}
+.ph:active{transform:scale(.96)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph span{position:absolute;left:6px;bottom:6px;font-size:12px;font-weight:600;background:rgba(18,17,16,.72);color:#fff;padding:3px 8px;border-radius:999px}
+.ph.add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:600;font-size:13px;color:var(--muted)}
+.ph.add svg{width:24px;height:24px}
+.ph.add span{position:static;background:none;color:inherit;padding:0}
+.ph.missing::after{content:"Photo not on this phone";position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-size:12px;color:var(--muted);padding:8px}
+.ph.mini{width:48px;height:48px;border-radius:10px;align-self:center}
+.ph.mini.missing::after{content:""}
+.entry.has-ph{grid-template-columns:56px 1fr 48px}
+.shot{display:grid;place-items:center;gap:8px;width:100%;aspect-ratio:4/5;max-height:52vh;border-radius:var(--r-card);background:var(--surface);overflow:hidden;font-weight:600;color:var(--muted)}
+.shot img{width:100%;height:100%;object-fit:cover}
+.shot svg{width:36px;height:36px}
+.tline{display:flex;flex-direction:column;gap:28px}
+.tl-item figure{margin:0}
+.tl-item .pic{border-radius:var(--r-card);overflow:hidden;background:var(--surface);aspect-ratio:4/5}
+.tl-item .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.tl-item figcaption{margin-top:10px}
+.tl-item .when{font-weight:700;font-size:17px}
+.tl-item .meta{font-size:14px;color:var(--muted);margin-top:2px}
+.tl-item .cap{font-size:15px;margin-top:6px}
+.tl-item .acts{display:flex;gap:16px;margin-top:2px}
+.switch{position:relative;width:52px;height:32px;border-radius:999px;background:var(--control);flex:none;transition:background-color var(--t-mid) linear}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform var(--t-mid) var(--ease)}
+.switch[aria-checked="true"]{background:var(--positive)}
+.switch[aria-checked="true"]::after{transform:translateX(20px)}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.swatch{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:600;width:64px;text-align:center;line-height:1.15}
+.swatch svg{width:44px;height:44px;border-radius:50%;box-shadow:0 0 0 1px var(--border)}
+.swatch[aria-pressed="true"] svg{box-shadow:0 0 0 2px var(--ground),0 0 0 4px var(--text)}
+.add-grid button.wide{grid-column:1/-1;min-height:72px;flex-direction:row;align-items:center;justify-content:flex-start}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#view">Skip to content</a>
+<main class="app" id="view" tabindex="-1"></main>
+
+<nav class="nav" id="nav" aria-label="Main" hidden>
+  <div class="nav-in">
+    <a class="tab" href="#today" data-tab="today"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg></span>Today</a>
+    <a class="tab" href="#journal" data-tab="journal"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h10.5A2.5 2.5 0 0 1 19 6v14.5H8.5A2.5 2.5 0 0 1 6 18z"/><path d="M6 18a2.5 2.5 0 0 1 2.5-2.5H19M10 8h5M10 11.5h3"/></svg></span>Journal</a>
+    <button class="tab tab-log" type="button" data-act="add"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span>Log</button>
+    <a class="tab" href="#growth" data-tab="growth"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5h16M5 15l4.5-4.5 3.5 3 6-7"/><path d="M15 6.5h4v4"/></svg></span>Growth</a>
+    <a class="tab" href="#geckos" data-tab="geckos"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c3.6 0 6 2.6 6 6.2 0 3.3-2.4 5.3-6 5.3s-6-2-6-5.3c0-3.6 2.4-6.2 6-6.2z"/><circle cx="9.3" cy="9" r=".9" fill="currentColor"/><circle cx="14.7" cy="9" r=".9" fill="currentColor"/><path d="M10.5 12c1 .6 2 .6 3 0M9 15l-1.5 5M15 15l1.5 5"/></svg></span>Geckos</a>
+  </div>
+</nav>
+
+<div class="scrim" id="scrim" data-act="close"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="grab" aria-hidden="true"></div>
+  <div class="sheet-head"><h2 id="sheetTitle"></h2>
+    <button class="x" type="button" data-act="close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheet-body" id="sheetBody"></div>
+  <div class="sheet-foot" id="sheetFoot"></div>
+</section>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="filePhoto" accept="image/*" hidden>
+<input type="file" id="fileShot" accept="image/*" hidden>
+<input type="file" id="fileImport" accept="application/json,.json" hidden>
+
+<script>
+'use strict';
+/* ================= constants ================= */
+const KEY = 'geckolog.v1';
+const DAY = 864e5;
+const VIEWS = ['today','journal','growth','geckos'];
+
+// Line drawings of each feeder insect (32x32, stroke = currentColor). Worms are rows of segments.
+const segs = (pts, r) => pts.map(([x,y]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('');
+const BUG_ART = {
+  crickets: `<ellipse cx="14" cy="18" rx="7.5" ry="3.8" transform="rotate(-12 14 18)"/><circle cx="23" cy="15" r="2.6"/><path d="M24.5 12.8c1.6-3.4 3-5.4 5-7M23.6 12.6c-.2-3.4-1.2-6-3-8.2M9 20.5l-2.5 5M13.5 21.5l-.8 5M8 16l6.5-6.2 3.3 6.4"/>`,
+  dubia: `<ellipse cx="16" cy="17" rx="7.2" ry="10"/><path d="M9.2 13h13.6M8.9 17h14.2M9.3 21h13.4M13.5 7.5C12.6 5.5 10.5 4 8 4M18.5 7.5C19.4 5.5 21.5 4 24 4M9 14l-4-2M9 19l-4 1.5M23 14l4-2M23 19l4 1.5"/>`,
+  mealworms: segs([[5,22],[8.6,19.4],[12.4,17.4],[16.4,16.4],[20.4,16.2],[24.2,14.8],[27.4,12.2]], 2.4),
+  superworms: segs([[5.5,21.5],[10.3,18.4],[15.4,16.8],[20.6,16.6],[25.6,14.4]], 3.2),
+  bsfl: segs([[8.5,17.5],[13.5,16.2],[18.5,16],[23.5,17]], 3.2),
+  silkworms: segs([[7.5,19],[13.2,16.4],[19,15.8],[24.4,17.4]], 3.8) + `<path d="M27.5 13.5l1.5-2"/>`,
+  hornworms: segs([[7,18.5],[12,16.2],[17,15.6],[22,16.4]], 3.3) + `<path d="M24.8 13.6c1.5-2.6 3.2-4 5-4.6"/>`,
+  waxworms: segs([[9.5,17.5],[14,16],[18.5,16],[23,17.4]], 2.8),
+};
+const bugSvg = id => `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${BUG_ART[id] || BUG_ART.crickets}</svg>`;
+const BUGS = [
+  {id:'crickets', name:'Crickets'},
+  {id:'dubia', name:'Dubia roaches', short:'Dubia'},
+  {id:'mealworms', name:'Mealworms'},
+  {id:'superworms', name:'Superworms', treat:true},
+  {id:'bsfl', name:'Soldier fly larvae', short:'BSF larvae'},
+  {id:'silkworms', name:'Silkworms'},
+  {id:'hornworms', name:'Hornworms'},
+  {id:'waxworms', name:'Waxworms', treat:true},
+];
+const DUST = [{id:'cal', name:'Calcium'},{id:'d3', name:'Calcium + D3'},{id:'multi', name:'Multivitamin'},{id:'none', name:'Nothing'}];
+const ATE = [{id:'all', name:'Ate it all'},{id:'some', name:'Ate some'},{id:'none', name:'Refused'}];
+const TYPES = {
+  feed:   {name:'Meal',     plural:'Meals',     title:'Log a meal'},
+  weight: {name:'Weigh-in', plural:'Weigh-ins', title:'Weigh-in'},
+  shed:   {name:'Shed',     plural:'Sheds',     title:'Shed'},
+  poop:   {name:'Poop',     plural:'Poops',     title:'Poop check'},
+  tank:   {name:'Tank check', plural:'Tank checks', title:'Tank check'},
+  note:   {name:'Note',     plural:'Notes',     title:'Note'},
+  photo:  {name:'Photo',    plural:'Photos',    title:'Add a photo'},
+};
+// Skin colours per morph: the band, the meal spots and the drawn face all take them.
+const SKINS = {
+  classic:  {name:'Classic',     skin:'#F5C242', body:'#E9A92A', spot:'#231B14', ink:'#231B14'},
+  tangerine:{name:'Tangerine',   skin:'#F49A3C', body:'#E5822A', spot:'#2A1A10', ink:'#231B14'},
+  lemon:    {name:'Lemon frost', skin:'#F6E26E', body:'#EBD04A', spot:'#231B14', ink:'#231B14'},
+  albino:   {name:'Albino',      skin:'#F6C978', body:'#EBB45E', spot:'#7A4C2A', ink:'#231B14'},
+  enigma:   {name:'Enigma',      skin:'#F2DCA8', body:'#E4C88C', spot:'#4A3628', ink:'#231B14'},
+  snow:     {name:'Snow',        skin:'#ECEAE4', body:'#D9D5CB', spot:'#231B14', ink:'#231B14'},
+  blizzard: {name:'Blizzard',    skin:'#F0EEE8', body:'#E2DED5', spot:'#8E877B', ink:'#231B14'},
+  murphy:   {name:'Patternless', skin:'#D9BE86', body:'#C8AA6E', spot:'#6E5636', ink:'#231B14'},
+  night:    {name:'Black night', skin:'#3B3530', body:'#2B2622', spot:'#EDE6DA', ink:'#F4F1EC'},
+};
+function autoSkin(morph){
+  const m = (morph || '').toLowerCase();
+  if (m.includes('black night')) return 'night';
+  if (m.includes('blizzard')) return 'blizzard';
+  if (m.includes('snow')) return 'snow';
+  if (m.includes('lemon')) return 'lemon';
+  if (m.includes('murphy') || m.includes('patternless')) return 'murphy';
+  if (m.includes('enigma')) return 'enigma';
+  if (/albino|raptor|tremper|bell|rainwater/.test(m)) return 'albino';
+  if (/tangerine|carrot|hypo|eclipse/.test(m)) return 'tangerine';
+  return 'classic';
+}
+const skinOf = g => SKINS[(g && g.skin && SKINS[g.skin]) ? g.skin : autoSkin(g && g.morph)];
+const skinVars = c => `--skin:${c.skin};--spot:${c.spot};--skin-ink:${c.ink};--skin-soft:${c.body}`;
+const SHED = [{id:'pale', name:'Going pale'},{id:'clean', name:'Shed cleanly'},{id:'stuck', name:'Some is stuck'}];
+const SHED_SPOTS = ['Toes','Tail tip','Eyes','Head','Body'];
+const POOP = [
+  {id:'normal', name:'Normal', s:'Brown with a white urate'},
+  {id:'runny', name:'Runny', s:'Soft or watery'},
+  {id:'urate', name:'Urate only', s:'Just the white part'},
+  {id:'undigested', name:'Undigested', s:'Bits of insect visible'},
+  {id:'odd', name:'Odd colour or smell', s:'Red, green, or very smelly'},
+];
+const NOTE_TAGS = ['General','Vet visit','Medication','Behaviour','Cleaning','Handling'];
+const TAILS = ['Skinny','Slim','Healthy','Chunky','Very chunky'];
+const MORPHS = ['Normal','High Yellow','Tangerine','Mack Snow','Super Snow','Tremper Albino','Bell Albino','Rainwater Albino','Blizzard','Murphy Patternless','Enigma','Raptor','Eclipse','Black Night','Lemon Frost','Bold Stripe','Jungle','Giant','Hypo','Carrot Tail'];
+// Ballpark guide numbers (PetMD life-stage table and common care sheets). Stage sets the defaults.
+const STAGES = {
+  hatchling: {name:'Hatchling', feed:1, weigh:7,  d3:7,  multi:7,  range:[2,15],  shed:'about once a week'},
+  juvenile:  {name:'Juvenile',  feed:1, weigh:7,  d3:7,  multi:7,  range:[15,30], shed:'every 2 to 4 weeks'},
+  subadult:  {name:'Sub-adult', feed:2, weigh:7,  d3:10, multi:10, range:[30,45], shed:'every 3 to 5 weeks'},
+  adult:     {name:'Adult',     feed:3, weigh:14, d3:14, multi:14, range:[50,80], shed:'every 4 to 8 weeks'},
+};
+const TANK = {warm:[30,35], cool:[22,27], hum:[30,50]};   // stored in °C and %
+const FEED_OPTS = [[0,'Auto'],[1,'Daily'],[2,'Every 2 days'],[3,'Every 3 days'],[4,'Twice a week'],[7,'Weekly']];
+const ICON = {
+  plus:'<path d="M12 6v12M6 12h12"/>', minus:'<path d="M6 12h12"/>', chev:'<path d="m9 6 6 6-6 6"/>',
+  alert:'<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.2M12 17.2v.3"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8v.3"/>',
+  scale:'<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 9.5a5 5 0 0 1 7 0l-2.2 2.2"/>',
+  shed:'<path d="M12 3.5c3.5 3.8 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2-6.2 5.5-10z"/><path d="M9.5 14.5c.4 1.4 1.4 2.2 2.8 2.4"/>',
+  poop:'<path d="M8 19.5h8a3.5 3.5 0 0 0 .8-6.9A3.2 3.2 0 0 0 13.5 8c.1-1.6-1-3-2.5-3.5.4 1.6-.7 3-2 3.4A3.3 3.3 0 0 0 7.2 12.6 3.5 3.5 0 0 0 8 19.5z"/>',
+  temp:'<path d="M10 14.2V5.5a2 2 0 0 1 4 0v8.7a4 4 0 1 1-4 0z"/><path d="M12 11v5"/>',
+  note:'<path d="M5 4.5h9.5L19 9v10.5H5z"/><path d="M14 4.5V9h5M8.5 13h7M8.5 16h4.5"/>',
+  meal:'<path d="M5 13.5h14a7 7 0 0 1-14 0z"/><path d="M9 9.5c0-1.2 1-1.6 1-2.8M13 9.5c0-1.2 1-1.6 1-2.8"/>',
+  photo:'<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.8l1.4-2h4.6l1.4 2h1.8A2.5 2.5 0 0 1 20 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.5"/>',
+};
+const icon = (name, sw=1.8) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name]}</svg>`;
+
+/* ================= state ================= */
+let S = load();
+let view = 'today';
+let journalFilter = 'all';
+let growthRange = 90;
+let mealSel = null;
+let F = null;
+let sheetRender = null;
+let sheetOpen = false;
+let deferredInstall = null;
+let lastFocus = null;
+let newSpotDay = null;
+let confirmCb = null;
+
+function blank(){ return {v:1, updatedAt:0, geckos:[], logs:[], settings:{unit:'C', theme:'auto', active:null, hideInstall:false, lastBackup:null,
+  sync:{code:null, on:false, last:null, error:null}, remind:{on:false, time:'19:00'}}}; }
+function load(){
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && s.v === 1) return Object.assign(blank(), s, {settings:Object.assign(blank().settings, s.settings)});
+  } catch(e){}
+  return blank();
+}
+// quiet = a settings-only change that shouldn't count as a newer log
+function save(quiet){
+  if (!quiet) S.updatedAt = Date.now();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch(e){ toast('Couldn’t save. Phone storage may be full, so try a smaller photo.'); return false; }
+  if (!quiet) syncSoon();
+  return true;
+}
+
+/* ================= sync with the Pi ================= */
+// Same secret-code idea as the study page: the code lives in the app and in the "other device" link.
+const API = (location.hostname === 'localhost' || location.protocol === 'file:') ? 'https://arifaqyl.me/gecko-api/' : new URL('../gecko-api/', location.href).href;
+const syncOn = () => !!(S.settings.sync && S.settings.sync.on && S.settings.sync.code);
+const apiUrl = p => API + S.settings.sync.code + '/' + p;
+function newCode(){ const b = new Uint8Array(16); crypto.getRandomValues(b); return [...b].map(x => x.toString(16).padStart(2,'0')).join(''); }
+let syncT = null, syncing = false;
+function syncSoon(){ if (!syncOn()) return; clearTimeout(syncT); syncT = setTimeout(pushData, 1500); }
+async function pushData(){
+  if (!syncOn() || syncing) return;
+  syncing = true;
+  try {
+    const r = await fetch(apiUrl('data'), {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(S)});
+    if (!r.ok) throw new Error(r.status);
+    S.settings.sync.last = new Date().toISOString(); S.settings.sync.error = null;
+    await uploadPending();
+  } catch(e){ S.settings.sync.error = navigator.onLine ? 'The Pi didn’t answer' : 'Offline'; }
+  syncing = false;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+  const st = document.getElementById('syncState'); if (st) st.textContent = syncText();
+}
+// On open: if the Pi has a newer log (say, edited on another device), take it.
+async function pullData(){
+  if (!syncOn()) return false;
+  try {
+    const r = await fetch(apiUrl('data'), {cache:'no-store'});
+    if (!r.ok) throw 0;
+    const d = await r.json();
+    if (d && d.v === 1 && Array.isArray(d.logs) && (d.updatedAt || 0) > (S.updatedAt || 0)){
+      const keep = {sync:S.settings.sync, remind:S.settings.remind, theme:S.settings.theme, hideInstall:S.settings.hideInstall};
+      S = Object.assign(blank(), d, {settings:Object.assign(blank().settings, d.settings, keep)});
+      try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+      return true;
+    }
+    if ((d.updatedAt || 0) < (S.updatedAt || 0)) pushData();
+  } catch(e){}
+  return false;
+}
+function syncText(){
+  const s = S.settings.sync;
+  if (!syncOn()) return 'Off. Your log lives only on this phone.';
+  if (s.error) return s.error + '. It’ll try again on the next change.';
+  return s.last ? 'Backed up ' + agoTime(s.last) : 'Backing up…';
+}
+function agoTime(iso){
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m/60)} h ago` : ago(iso);
+}
+
+/* ================= photos: stored on the phone (IndexedDB), copied to the Pi when sync is on ================= */
+let dbP = null;
+function db(){
+  if (!dbP) dbP = new Promise((res, rej) => { const r = indexedDB.open('geckolog', 1); r.onupgradeneeded = () => { r.result.createObjectStore('photos'); r.result.createObjectStore('pending'); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  return dbP;
+}
+async function idb(store, mode, fn){ const d = await db(); return new Promise((res, rej) => { const tx = d.transaction(store, mode); const req = fn(tx.objectStore(store)); tx.oncomplete = () => res(req && req.result); tx.onerror = () => rej(tx.error); }); }
+const photoPut = (id, blob) => idb('photos', 'readwrite', s => s.put(blob, id));
+const photoGet = id => idb('photos', 'readonly', s => s.get(id));
+const photoDel = id => idb('photos', 'readwrite', s => s.delete(id));
+const pendAdd = id => idb('pending', 'readwrite', s => s.put(1, id));
+const pendDel = id => idb('pending', 'readwrite', s => s.delete(id));
+const pendAll = () => idb('pending', 'readonly', s => s.getAllKeys());
+async function uploadPending(){
+  if (!syncOn()) return;
+  for (const id of (await pendAll()) || []){
+    const blob = await photoGet(id);
+    if (!blob){ await pendDel(id); continue; }
+    const r = await fetch(apiUrl('photo/' + id), {method:'PUT', headers:{'Content-Type':'image/jpeg'}, body: blob});
+    if (r.ok) await pendDel(id); else break;
+  }
+}
+const photoUrls = new Map();
+async function photoUrl(id){
+  if (photoUrls.has(id)) return photoUrls.get(id);
+  let blob = await photoGet(id).catch(() => null);
+  if (!blob && syncOn()){
+    try { const r = await fetch(apiUrl('photo/' + id)); if (r.ok){ blob = await r.blob(); await photoPut(id, blob); } } catch(e){}
+  }
+  if (!blob) return null;
+  const u = URL.createObjectURL(blob); photoUrls.set(id, u); return u;
+}
+// Fill every <img data-pid> on screen from the phone, or from the Pi on a new device.
+function hydratePhotos(root=document){
+  root.querySelectorAll('img[data-pid]:not([src])').forEach(async img => {
+    const u = await photoUrl(img.dataset.pid);
+    if (u) img.src = u; else img.closest('.ph')?.classList.add('missing');
+  });
+}
+function shrink(file, max=1440, q=.85){
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res(b) : rej(new Error('encode')), 'image/jpeg', q);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('read')); };
+    img.src = url;
+  });
+}
+
+/* ================= reminders (web push from the Pi) ================= */
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const b64ToBytes = s => { s = s.replace(/-/g,'+').replace(/_/g,'/'); s += '='.repeat((4 - s.length % 4) % 4); return Uint8Array.from(atob(s), c => c.charCodeAt(0)); };
+async function enableReminders(){
+  if (!pushSupported()){
+    toast(isIOS && !standalone() ? 'Add Gecko Log to your Home Screen first, then turn reminders on from there.' : 'This browser can’t show reminders.');
+    return false;
+  }
+  if (!syncOn()){ S.settings.sync = Object.assign(S.settings.sync, {on:true, code:S.settings.sync.code || newCode()}); save(true); await pushData(); }
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted'){ toast('Notifications are blocked. Allow them for this site in your phone’s settings.'); return false; }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const {key} = await fetch(API + 'vapid').then(r => r.json());
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64ToBytes(key)});
+    const r = await fetch(apiUrl('push'), {method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({subscription: sub.toJSON(), time: S.settings.remind.time, tz: Intl.DateTimeFormat().resolvedOptions().timeZone})});
+    if (!r.ok) throw new Error(r.status);
+    S.settings.remind.on = true; save(true);
+    return true;
+  } catch(e){
+    const noService = /push service|not supported|AbortError/i.test(String(e && (e.message || e.name)));
+    toast(noService ? 'This browser can’t get reminders. Use Chrome on Android, or Gecko Log from the Home Screen on iPhone.' : 'Couldn’t reach the Pi to set reminders. Try again in a moment.');
+    return false;
+  }
+}
+async function disableReminders(){
+  S.settings.remind.on = false; save(true);
+  try { await fetch(apiUrl('push'), {method:'DELETE'}); } catch(e){}
+  try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch(e){}
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sod = d => { const x = new Date(d); x.setHours(0,0,0,0); return x.getTime(); };
+const daysSince = iso => Math.round((sod(Date.now()) - sod(iso)) / DAY);
+const pad2 = n => String(n).padStart(2,'0');
+const toLocalInput = d => { d = new Date(d); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+const fmtTime = new Intl.DateTimeFormat(undefined, {hour:'numeric', minute:'2-digit'});
+const fmtDay = new Intl.DateTimeFormat(undefined, {weekday:'short', day:'numeric', month:'short'});
+const fmtDayY = new Intl.DateTimeFormat(undefined, {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+const fmtShort = new Intl.DateTimeFormat(undefined, {day:'numeric', month:'short'});
+const fmtWk = new Intl.DateTimeFormat(undefined, {weekday:'narrow'});
+const nf1 = new Intl.NumberFormat(undefined, {minimumFractionDigits:1, maximumFractionDigits:1});
+const timeStr = d => fmtTime.format(new Date(d));
+function dayLabel(d){
+  const n = daysSince(d);
+  if (n === 0) return 'Today';
+  if (n === 1) return 'Yesterday';
+  const dt = new Date(d);
+  return (dt.getFullYear() === new Date().getFullYear() ? fmtDay : fmtDayY).format(dt);
+}
+const ago = d => { const n = daysSince(d); return n === 0 ? 'today' : n === 1 ? 'yesterday' : `${n} days ago`; };
+const g1 = g => nf1.format(Math.round(g*10)/10);
+const cToU = c => c == null ? null : S.settings.unit === 'F' ? Math.round((c*9/5+32)*10)/10 : c;
+const uToC = u => S.settings.unit === 'F' ? Math.round(((u-32)*5/9)*10)/10 : u;
+const deg = () => S.settings.unit === 'F' ? '°F' : '°C';
+const plural = (n, w, p) => `${n} ${n === 1 ? w : (p || w + 's')}`;
+
+function gecko(id){ return S.geckos.find(g => g.id === id); }
+function active(){
+  let g = gecko(S.settings.active);
+  if (!g && S.geckos.length){ g = S.geckos[0]; S.settings.active = g.id; }
+  return g;
+}
+function logsOf(gid, type){
+  return S.logs.filter(l => (!gid || l.g === gid) && (!type || l.t === type)).sort((a,b) => b.at.localeCompare(a.at));
+}
+function ageMonths(g){ return g.hatch ? (Date.now() - new Date(g.hatch)) / (30.44*DAY) : null; }
+function stageOf(g){
+  const m = ageMonths(g);
+  if (m == null) return g.stage || 'adult';
+  return m < 2 ? 'hatchling' : m < 7 ? 'juvenile' : m < 12 ? 'subadult' : 'adult';
+}
+function ageText(g){
+  const m = ageMonths(g);
+  if (m == null) return null;
+  if (m < 1) return plural(Math.max(0, Math.floor(m*30.44)), 'day') + ' old';
+  if (m < 24) return plural(Math.floor(m), 'month') + ' old';
+  const y = Math.floor(m/12), r = Math.floor(m%12);
+  return plural(y, 'year') + (r ? ', ' + plural(r, 'month') : '') + ' old';
+}
+const feedEvery = g => g.feedEvery || STAGES[stageOf(g)].feed;
+const bugName = id => (BUGS.find(b => b.id === id) || {name:id}).name;
+function feedSummary(d){
+  const items = (d.items||[]).filter(i => i.n > 0);
+  if (!items.length) return 'nothing';
+  return items.map(i => `${i.n} ${bugName(i.bug).toLowerCase()}`).join(' and ');
+}
+const totalBugs = d => (d.items||[]).reduce((s,i) => s + (+i.n||0), 0);
+const dustName = id => (DUST.find(x => x.id === id) || {}).name;
+const dustLower = id => ({cal:'calcium', d3:'calcium + D3', multi:'multivitamin', none:'nothing'})[id] || '';
+
+/* ================= drawings ================= */
+// Seeded random, so a day's spot keeps its shape forever.
+function rng(seed){ let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function blob(cx, cy, r, seed, n=7){
+  const R = rng(seed), p = [];
+  for (let i = 0; i < n; i++){ const a = i/n*Math.PI*2 + R()*.5; const rr = r*(.72 + R()*.42); p.push([cx + Math.cos(a)*rr, cy + Math.sin(a)*rr]); }
+  const mid = (a,b) => [(a[0]+b[0])/2, (a[1]+b[1])/2];
+  let d = `M${mid(p[n-1],p[0]).map(v => v.toFixed(1)).join(',')}`;
+  for (let i = 0; i < n; i++){ const m = mid(p[i], p[(i+1)%n]); d += ` Q${p[i][0].toFixed(1)},${p[i][1].toFixed(1)} ${m[0].toFixed(1)},${m[1].toFixed(1)}`; }
+  return d + 'Z';
+}
+// One day's mark: 'f' ate, 'p' ate some, 'r' refused, '' nothing.
+function spot(kind, seed, size=26, pop=false){
+  const c = size/2;
+  const cls = pop ? ' class="spot-in" style="transform-origin:center;transform-box:fill-box"' : '';
+  if (kind === 'f') return `<path${cls} d="${blob(c,c,size*.42,seed)}" fill="var(--spot)"/>`;
+  if (kind === 'p') return `<path${cls} d="${blob(c,c,size*.27,seed)}" fill="var(--spot)"/>`;
+  if (kind === 'r') return `<path${cls} d="${blob(c,c,size*.36,seed)}" fill="none" stroke="var(--spot)" stroke-width="2"/>`;
+  return `<circle cx="${c}" cy="${c}" r="2" fill="var(--spot)" opacity=".28"/>`;
+}
+// Top-down leopard gecko in its own colours.
+function geckoArt(){
+  // Broad wedge head with eyes on its edges, a thick body, short bent legs with splayed toes, a fat carrot tail.
+  const legs = 'M35 56 L21 53 L16 43 M65 56 L79 53 L84 43 M35 84 L22 90 L18 101 M65 84 L78 90 L82 101';
+  const toes = [[16,43,-1,-1],[84,43,1,-1],[18,101,-1,1],[82,101,1,1]].map(([x,y,sx,sy]) =>
+    `M${x} ${y} l${sx*-1} ${sy*6} M${x} ${y} l${sx*4.5} ${sy*4} M${x} ${y} l${sx*6} ${sy*-1} M${x} ${y} l${sx*-4.5} ${sy*3.5}`).join(' ');
+  const spotSet = [[50,19,2.6,1],[42,25,1.6,2],[58,26,1.9,3],[50,49,3,4],[40,58,2.6,5],[59,61,3.2,6],[48,69,2.4,7],[39,77,2.2,8],[58,79,2.8,9],[49,86,2,10],
+    [50,104,3,11],[42,114,2.2,12],[57,116,2.4,13],[49,126,2.2,14],[51,137,1.6,15]];
+  return `<svg viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="${legs}" stroke="#231B14" stroke-width="11"/>
+      <path d="${toes}" stroke="#231B14" stroke-width="2.4"/>
+      <path d="${legs}" stroke="#EBB13A" stroke-width="7"/>
+    </g>
+    <g fill="#EBB13A" stroke="#231B14" stroke-width="2.4" stroke-linejoin="round">
+      <path d="M50 88c13 1 18 16 14 33-3 12-8 21-14 26-6-5-11-14-14-26-4-17 1-32 14-33z"/>
+      <path d="M50 38c13 0 20 12 20 29s-7 27-20 27-20-10-20-27 7-29 20-29z"/>
+      <path d="M50 5c14 0 24 9 24 21 0 11-10 18-24 18S26 37 26 26C26 14 36 5 50 5z"/>
+    </g>
+    <g fill="#231B14">${spotSet.map(([x,y,r,s]) => `<path d="${blob(x,y,r,s*37)}"/>`).join('')}</g>
+    <g fill="#231B14"><ellipse cx="29.5" cy="22" rx="4.8" ry="5.6"/><ellipse cx="70.5" cy="22" rx="4.8" ry="5.6"/></g>
+    <g fill="#fff"><circle cx="28.3" cy="20.2" r="1.7"/><circle cx="69.3" cy="20.2" r="1.7"/></g>
+  </svg>`;
+}
+// Avatar fallback: the gecko's face, front on.
+function geckoFace(c=SKINS.classic){
+  // A leopard gecko's broad, flat head: eyes set wide on the sides, a long smile, nostrils at the snout.
+  return `<svg viewBox="0 0 60 60" aria-hidden="true"><rect width="60" height="60" fill="${c.skin}"/>
+    <path d="M5 35c0-12 11-21 25-21s25 9 25 21c0 9-10 14-25 14S5 44 5 35z" fill="${c.body}" stroke="${c.ink === '#231B14' ? '#231B14' : '#0E0B09'}" stroke-width="2"/>
+    <g fill="${c.spot}"><circle cx="30" cy="19.5" r="1.7"/><circle cx="23" cy="21" r="1.2"/><circle cx="37.5" cy="21.5" r="1.4"/><circle cx="26.5" cy="26" r="1"/><circle cx="34" cy="26.5" r="1.1"/></g>
+    <g fill="#231B14" stroke="${c.ink}" stroke-width="1"><ellipse cx="14.5" cy="30" rx="5.6" ry="6.2"/><ellipse cx="45.5" cy="30" rx="5.6" ry="6.2"/></g>
+    <g fill="${c.ink}"><circle cx="27.6" cy="36" r=".9"/><circle cx="32.4" cy="36" r=".9"/></g>
+    <g fill="#fff"><circle cx="12.8" cy="28" r="1.8"/><circle cx="43.8" cy="28" r="1.8"/></g>
+    <path d="M13 40.5c8 5 26 5 34 0" fill="none" stroke="${c.ink}" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+}
+const avatar = g => `<span class="av">${g && g.photo ? `<img src="${g.photo}" alt="" width="56" height="56">` : geckoFace(skinOf(g))}</span>`;
+function tailArt(k){
+  const w = 4 + k*2.6;
+  return `<svg viewBox="0 0 40 44" aria-hidden="true"><path d="M20 3C${20-w} 10 ${20-w} 24 20 41C${20+w} 24 ${20+w} 10 20 3Z" fill="#E9A92A" stroke="#231B14" stroke-width="1.6"/>
+    <path d="M${20-w*.7} 16h${w*1.4}M${20-w*.75} 24h${w*1.5}" stroke="#231B14" stroke-width="1.2" opacity=".5"/></svg>`;
+}
+
+/* ================= insights ================= */
+const mealKind = f => f.d.ate === 'none' ? 'r' : f.d.ate === 'some' ? 'p' : 'f';
+function mealsByDay(gid){
+  const m = {}, rank = {r:1, p:2, f:3};
+  logsOf(gid,'feed').forEach(f => {
+    const k = sod(f.at), v = mealKind(f), cur = m[k];
+    if (!cur || rank[v] > rank[cur.kind]) m[k] = {kind:v, log:f};
+  });
+  return m;
+}
+function insights(g){
+  const st = STAGES[stageOf(g)];
+  const feeds = logsOf(g.id, 'feed');
+  const lastFeed = feeds[0];
+  const every = feedEvery(g);
+  const sinceFeed = lastFeed ? daysSince(lastFeed.at) : null;
+  const feedDue = lastFeed ? every - sinceFeed : 0;
+  const lastDust = id => feeds.find(f => f.d.dust === id);
+  const d3 = lastDust('d3'), multi = lastDust('multi');
+  const d3Due = d3 ? st.d3 - daysSince(d3.at) : 0;
+  const multiDue = multi ? st.multi - daysSince(multi.at) : 0;
+  const weights = logsOf(g.id, 'weight');
+  const lastW = weights[0];
+  const weighDue = lastW ? st.weigh - daysSince(lastW.at) : 0;
+  const sheds = logsOf(g.id, 'shed');
+  const done = sheds.filter(s => s.d.result !== 'pale');
+  let avgShed = null;
+  if (done.length >= 2){
+    const gaps = []; for (let i = 0; i < Math.min(done.length-1, 6); i++) gaps.push((new Date(done[i].at) - new Date(done[i+1].at)) / DAY);
+    avgShed = Math.round(gaps.reduce((a,b) => a+b, 0) / gaps.length);
+  }
+  const lastShed = done[0];
+  const nextShed = lastShed && avgShed ? avgShed - daysSince(lastShed.at) : null;
+  const tank = logsOf(g.id, 'tank')[0];
+  const pale = sheds[0] && sheds[0].d.result === 'pale' && daysSince(sheds[0].at) <= 4;
+
+  const alerts = [];
+  if (sheds[0] && sheds[0].d.result === 'stuck' && daysSince(sheds[0].at) <= 7)
+    alerts.push({lvl:'neg', t:`Stuck shed on ${(sheds[0].d.spots||[]).join(', ').toLowerCase() || 'the body'}`,
+      s:'Give a warm, shallow soak for 15 to 20 minutes, then roll it off gently with a damp cotton bud. If toes stay wrapped, see a reptile vet.'});
+  const recent = feeds.slice(0,3);
+  if (recent.length === 3 && recent.every(f => f.d.ate === 'none'))
+    alerts.push({lvl:'warn', t:'Refused the last 3 meals', s:'Check the warm side temperature and whether a shed is coming. Watch the tail and weight.'});
+  if (weights.length >= 2 && lastW){
+    const recentMax = Math.max(...weights.filter(w => daysSince(w.at) <= 45).map(w => w.d.g));
+    if (lastW.d.g < recentMax * 0.9)
+      alerts.push({lvl:'neg', t:`Down ${Math.round((1 - lastW.d.g/recentMax)*100)}% from ${g1(recentMax)} g`, s:'Losing more than a tenth of their weight is worth a reptile vet visit, especially if the tail is thinning.'});
+  }
+  const lastPoop = logsOf(g.id,'poop')[0];
+  if (lastPoop && ['runny','odd'].includes(lastPoop.d.kind) && daysSince(lastPoop.at) <= 3)
+    alerts.push({lvl:'warn', t:'Unusual poop logged '+ago(lastPoop.at), s:'If it happens again, check the warm side and ask a vet about a fecal test.'});
+
+  const tasks = [];
+  tasks.push({type:'feed', t:'Next meal', s: lastFeed ? `Last: ${feedSummary(lastFeed.d)}, ${ago(lastFeed.at)}` : 'No meals logged yet', due: feedDue});
+  tasks.push({type:'feed', dust:'d3', t:'Calcium + D3', s: d3 ? `Last dusted ${ago(d3.at)}` : `Roughly every ${st.d3} days`, due: d3Due});
+  tasks.push({type:'feed', dust:'multi', t:'Multivitamin', s: multi ? `Last dusted ${ago(multi.at)}` : `Roughly every ${st.multi} days`, due: multiDue});
+  tasks.push({type:'weight', t:'Weigh-in', s: lastW ? `Last: ${g1(lastW.d.g)} g, ${ago(lastW.at)}` : `${st.name}s usually weigh ${st.range[0]} to ${st.range[1]} g`, due: weighDue});
+  if (nextShed != null) tasks.push({type:'shed', t:'Next shed', s:`Usually every ${avgShed} days`, due: nextShed, estimate:true});
+  tasks.push({type:'tank', t:'Tank check', s: tank ? `Warm side ${tank.d.warm != null ? g1(cToU(tank.d.warm)) + deg() : 'not taken'}, ${ago(tank.at)}` : 'Temperatures and humidity', due: tank ? 7 - daysSince(tank.at) : 0, soft:true});
+  tasks.sort((a,b) => a.due - b.due);
+
+  // The line under the name: the most useful thing to know right now.
+  let finding;
+  const dustTip = d3Due <= 0 ? ' Dust with calcium + D3.' : multiDue <= 0 ? ' Dust with multivitamin.' : '';
+  const next = feedDue === 1 ? 'tomorrow' : 'in ' + feedDue + ' days';
+  if (alerts.some(a => a.lvl === 'neg')) finding = alerts.find(a => a.lvl === 'neg').t + '.';
+  else if (pale) finding = 'Going pale, so a shed is close. Keep the humid hide damp.';
+  else if (!lastFeed) finding = 'Log the first meal to start the spot trail.';
+  else if (sinceFeed === 0 && lastFeed.d.ate !== 'none') finding = `Ate ${feedSummary(lastFeed.d)} today.` + (feedDue >= 1 ? ` Next meal ${next}.` : '');
+  else if (feedDue < 0) finding = `Last fed ${ago(lastFeed.at)}, so a meal is ${plural(-feedDue,'day')} late.` + dustTip;
+  else if (feedDue === 0) finding = 'Dinner is due today.' + dustTip;
+  else finding = `Fed ${ago(lastFeed.at)}. Next meal ${next}.`;
+
+  return {st, lastFeed, sinceFeed, feedDue, every, lastW, weights, lastShed, avgShed, alerts, tasks, finding, d3Due, multiDue, tank, pale};
+}
+function suggestDust(g){ const i = insights(g); return i.d3Due <= 0 ? 'd3' : i.multiDue <= 0 ? 'multi' : 'cal'; }
+
+/* ================= views ================= */
+function render(){
+  applyTheme();
+  const nav = $('#nav');
+  document.body.style.background = S.geckos.length ? '' : 'var(--skin)';
+  if (!S.geckos.length){ nav.hidden = true; $('#view').innerHTML = viewHello(); document.title = 'Gecko Log'; return; }
+  nav.hidden = false;
+  document.querySelectorAll('.tab[data-tab]').forEach(t => { if (t.dataset.tab === view) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current'); });
+  $('#view').innerHTML = ({today:viewToday, journal:viewJournal, growth:viewGrowth, geckos:viewGeckos}[view])();
+  document.title = ({today:active().name, journal:'Journal', growth:'Growth', geckos:'Geckos'}[view]) + ' – Gecko Log';
+  newSpotDay = null;
+  hydratePhotos($('#view'));
+}
+
+function viewHello(){
+  return `<section class="hello">
+    <div class="art">${geckoArt()}</div>
+    <h1>Gecko Log</h1>
+    <p>Meals, sheds and weigh-ins for your leopard gecko, kept right on your phone.</p>
+    <button class="btn btn-primary btn-wide" type="button" data-act="geckoForm">Add your gecko</button>
+    <button class="link" type="button" data-act="import">Restore a backup</button>
+  </section>`;
+}
+
+function topBar(){
+  const a = active();
+  return `<header class="bar">
+    <span class="brand"><svg viewBox="0 0 26 26" aria-hidden="true"><path d="${blob(13,13,11,7)}" fill="var(--skin)"/><path d="${blob(9,10,2.6,3)}" fill="#231B14"/><path d="${blob(16.5,14,3,11)}" fill="#231B14"/><path d="${blob(10.5,17.5,2,5)}" fill="#231B14"/></svg>Gecko Log</span>
+    ${S.geckos.length > 1 ? `<div class="who" role="group" aria-label="Choose gecko">${S.geckos.map(g => `<button type="button" data-act="pick" data-id="${g.id}" aria-pressed="${g.id === a.id}" aria-label="${esc(g.name)}">${avatar(g)}</button>`).join('')}</div>` : ''}
+  </header>`;
+}
+function installNote(){
+  if (S.settings.hideInstall) return '';
+  if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) return '';
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (!ios && !deferredInstall) return '';
+  return `<div class="notice pos act">${icon('info')}
+    <div><b>Keep it on your home screen</b><p>${ios ? 'Tap Share, then Add to Home Screen.' : 'It opens like an app and works offline.'}</p></div>
+    ${ios ? `<button class="btn btn-quiet" type="button" data-act="hideInstall">Done</button>` : `<button class="btn btn-primary" type="button" data-act="install">Install</button>`}</div>`;
+}
+function backupNote(){
+  const n = S.logs.length, last = S.settings.lastBackup;
+  if (syncOn() || n < 20 || (last && daysSince(last) < 30)) return '';
+  return `<div class="notice warn act">${icon('info')}
+    <div><b>${last ? 'Time for a new backup' : 'Save a backup'}</b><p>${plural(n,'entry','entries')} live only on this phone.</p></div>
+    <button class="btn btn-quiet" type="button" data-act="export">Export</button></div>`;
+}
+
+function viewToday(){
+  const g = active();
+  const i = insights(g);
+  const meals = mealsByDay(g.id);
+  const today = sod(Date.now());
+  const days = []; for (let k = 13; k >= 0; k--) days.push(today - k*DAY);
+  if (mealSel != null && mealSel < days[0]) mealSel = null;
+  const selDay = mealSel ?? (Object.keys(meals).map(Number).filter(t => t >= days[0]).sort((a,b) => b-a)[0] ?? null);
+  const fed14 = days.filter(t => meals[t] && meals[t].kind !== 'r').length;
+  const ref14 = days.filter(t => meals[t] && meals[t].kind === 'r').length;
+  const w30 = i.weights.filter(x => daysSince(x.at) <= 30);
+  const wChange = i.lastW && w30.length > 1 ? Math.round((i.lastW.d.g - w30[w30.length-1].d.g)*10)/10 : null;
+  const recent = logsOf(g.id).slice(0,4);
+
+  return `${topBar()}
+  <section class="skin" style="${skinVars(skinOf(g))}" aria-labelledby="gname">
+    <div class="skin-head">
+      <div><h1 id="gname">${esc(g.name)}</h1><p class="finding">${esc(i.finding)}</p></div>
+      <button class="portrait" type="button" data-act="geckoForm" data-id="${g.id}" aria-label="Edit ${esc(g.name)}’s profile">${g.photo ? `<img src="${g.photo}" alt="" width="84" height="84">` : geckoFace(skinOf(g))}</button>
+    </div>
+    <div class="meals">
+      <h2 class="sr">Meals in the last 14 days</h2>
+      <div class="meals-grid">${days.map(t => {
+        const m = meals[t]; const kind = m ? m.kind : '';
+        const label = `${fmtDay.format(new Date(t))}: ${m ? (kind === 'r' ? 'refused ' : 'ate ') + feedSummary(m.log.d) : 'no meal'}`;
+        return `<button class="meal${t === today ? ' today' : ''}" type="button" data-act="meal" data-t="${t}" aria-pressed="${t === selDay}" aria-label="${esc(label)}">
+          <svg viewBox="0 0 26 26" aria-hidden="true">${spot(kind, t/DAY|0, 26, newSpotDay === t)}</svg><span class="d" aria-hidden="true">${fmtWk.format(new Date(t))}</span></button>`; }).join('')}</div>
+      <p class="meal-say" id="mealSay" aria-live="polite">${esc(mealLine(selDay, meals))}</p>
+    </div>
+  </section>
+
+  <div class="do" role="group" aria-label="Log for ${esc(g.name)}">
+    <button class="btn btn-primary" type="button" data-act="log" data-type="feed">${icon('plus',2.2)}Log a meal</button>
+    <button class="btn btn-quiet" type="button" data-act="log" data-type="photo">${icon('photo')}Photo</button>
+    <button class="btn btn-quiet" type="button" data-act="log" data-type="weight">Weigh</button>
+    <button class="btn btn-quiet" type="button" data-act="log" data-type="shed">Shed</button>
+    <button class="btn btn-quiet" type="button" data-act="log" data-type="poop">Poop</button>
+    <button class="btn btn-quiet" type="button" data-act="log" data-type="tank">Tank</button>
+    <button class="btn btn-quiet" type="button" data-act="log" data-type="note">Note</button>
+  </div>
+
+  ${i.alerts.map(a => `<div class="notice ${a.lvl}" role="note">${icon('alert')}<div><b>${esc(a.t)}</b><p>${esc(a.s)}</p></div></div>`).join('')}
+  ${installNote()}${backupNote()}
+
+  <section class="sec" aria-labelledby="h-next">
+    <div class="sec-head"><h2 id="h-next">Coming up</h2></div>
+    <div class="panel"><div class="rows">${i.tasks.slice(0,4).map(t => {
+      const cls = t.estimate ? 'neu' : t.due < 0 ? (t.soft ? 'warn' : 'neg') : t.due === 0 ? 'warn' : 'neu';
+      const when = t.estimate ? (t.due <= 0 ? 'Any day' : `In about ${t.due} days`) : t.due < 0 ? `${plural(-t.due,'day')} late` : t.due === 0 ? 'Today' : t.due === 1 ? 'Tomorrow' : `In ${t.due} days`;
+      return `<button class="row" type="button" data-act="log" data-type="${t.type}"${t.dust ? ` data-dust="${t.dust}"` : ''}>
+        <span style="min-width:0"><span class="t">${t.t}</span><span class="s">${esc(t.s)}</span></span>
+        <span class="pill ${cls}">${when}</span></button>`; }).join('')}</div></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-num">
+    <div class="sec-head"><h2 id="h-num">${esc(g.name)} in numbers</h2><a class="link" href="#growth">See growth</a></div>
+    <div class="figs">
+      <div class="fig"><div class="k">Weight</div><div class="v">${i.lastW ? g1(i.lastW.d.g) + '<small>g</small>' : '<span class="muted">–</span>'}</div>
+        <div class="c ${wChange > 0 ? 'pos' : wChange < 0 ? 'neg' : ''}">${wChange != null ? (wChange > 0 ? '+' : wChange < 0 ? '−' : '±') + g1(Math.abs(wChange)) + ' g in 30 days' : i.lastW ? 'Weighed ' + ago(i.lastW.at) : 'Not weighed yet'}</div></div>
+      <div class="fig"><div class="k">Meals, 14 days</div><div class="v">${fed14}</div><div class="c">${ref14 ? plural(ref14,'refusal') : 'No refusals'}</div></div>
+      <div class="fig"><div class="k">Last shed</div><div class="v">${i.lastShed ? daysSince(i.lastShed.at) + '<small>days ago</small>' : '<span class="muted">–</span>'}</div><div class="c">${i.avgShed ? 'Usually every ' + i.avgShed + ' days' : 'Not enough sheds yet'}</div></div>
+      <div class="fig"><div class="k">Warm side</div><div class="v">${i.tank && i.tank.d.warm != null ? g1(cToU(i.tank.d.warm)) + '<small>' + deg() + '</small>' : '<span class="muted">–</span>'}</div><div class="c">${i.tank ? 'Checked ' + ago(i.tank.at) : 'No reading yet'}</div></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-rec">
+    <div class="sec-head"><h2 id="h-rec">Recent</h2>${recent.length ? '<a class="link" href="#journal">Open journal</a>' : ''}</div>
+    ${recent.length ? `<div class="list">${recent.map(l => entryRow(l, true)).join('')}</div>`
+      : `<div class="empty"><b>Nothing logged yet</b>Meals, sheds and weigh-ins you log will show up here.</div>`}
+  </section>`;
+}
+function mealLine(t, meals){
+  if (t == null) return 'No meals in the last two weeks.';
+  const m = meals[t], day = dayLabel(t);
+  if (!m) return `${day}: no meal.`;
+  const d = m.log.d;
+  const dust = d.dust && d.dust !== 'none' ? `, dusted with ${dustLower(d.dust)}` : '';
+  return `${day}: ${d.ate === 'none' ? 'refused' : d.ate === 'some' ? 'ate some of' : 'ate'} ${feedSummary(d)}${dust}.`;
+}
+
+function logTitle(l){
+  const d = l.d || {};
+  switch (l.t){
+    case 'feed': return d.ate === 'none' ? `Refused ${feedSummary(d)}` : d.ate === 'some' ? `Ate some of ${feedSummary(d)}` : `Ate ${feedSummary(d)}`;
+    case 'weight': return `Weighed ${g1(d.g)} g`;
+    case 'shed': return d.result === 'pale' ? 'Going pale before a shed' : d.result === 'stuck' ? `Stuck shed on ${(d.spots||[]).join(', ').toLowerCase() || 'some spots'}` : 'Shed cleanly';
+    case 'poop': return 'Poop: ' + ((POOP.find(p => p.id === d.kind) || {}).name || '').toLowerCase();
+    case 'tank': return 'Tank ' + [d.warm != null ? `warm ${g1(cToU(d.warm))}°` : null, d.cool != null ? `cool ${g1(cToU(d.cool))}°` : null, d.hum != null ? `${d.hum}% humidity` : null].filter(Boolean).join(', ');
+    case 'note': return (d.tag && d.tag !== 'General' ? d.tag + ': ' : '') + ((l.note || '').split('\n')[0] || 'Note');
+    case 'photo': return l.note ? l.note.split('\n')[0] : 'Photo';
+  }
+}
+function logSub(l){
+  const d = l.d || {}, bits = [];
+  if (l.t === 'feed' && d.dust && d.dust !== 'none') bits.push('Dusted with ' + dustLower(d.dust));
+  if (l.t === 'weight' && d.tail) bits.push('Tail looks ' + TAILS[d.tail-1].toLowerCase());
+  if (l.t === 'shed' && d.helped) bits.push('Helped it along');
+  if (l.t === 'photo'){ const g = gecko(l.g); if (g) bits.push(photoMeta(l, g)); }
+  else if (l.t !== 'note' && l.note) bits.push(l.note);
+  return bits.join('. ');
+}
+function entryRow(l, relative){
+  const sub = logSub(l);
+  const when = relative && daysSince(l.at) > 1 ? fmtShort.format(new Date(l.at)) : relative && daysSince(l.at) === 1 ? 'Yest.' : timeStr(l.at);
+  if (l.t === 'photo') return `<button class="entry has-ph" type="button" data-act="viewPhoto" data-id="${l.id}"><span class="time">${when}</span>
+    <span style="min-width:0"><span class="t">${esc(logTitle(l))}</span>${sub ? `<span class="s">${esc(sub)}</span>` : ''}</span>
+    <span class="ph mini"><img data-pid="${l.d.pid}" alt="" width="48" height="48"></span></button>`;
+  return `<button class="entry" type="button" data-act="edit" data-id="${l.id}"><span class="time">${when}</span>
+    <span style="min-width:0"><span class="t">${esc(logTitle(l))}</span>${sub ? `<span class="s">${esc(sub)}</span>` : ''}</span></button>`;
+}
+// "14 months old, 53.6 g": age at the photo's date and the weigh-in closest to it (within 3 weeks)
+function ageAt(g, iso){
+  if (!g.hatch) return null;
+  const m = (new Date(iso) - new Date(g.hatch)) / (30.44*DAY);
+  if (m < 0) return null;
+  if (m < 1) return plural(Math.max(0, Math.round(m*30.44)), 'day') + ' old';
+  if (m < 24) return plural(Math.floor(m), 'month') + ' old';
+  return plural(Math.floor(m/12), 'year') + (Math.floor(m%12) ? ', ' + plural(Math.floor(m%12), 'month') : '') + ' old';
+}
+function weightNear(g, iso){
+  const t = +new Date(iso); let best = null;
+  logsOf(g.id, 'weight').forEach(w => { const dd = Math.abs(+new Date(w.at) - t); if (dd <= 21*DAY && (!best || dd < best.dd)) best = {dd, g:w.d.g}; });
+  return best ? best.g : null;
+}
+function photoMeta(l, g){
+  const w = weightNear(g, l.at);
+  return [ageAt(g, l.at), w != null ? g1(w) + ' g' : null].filter(Boolean).join(', ');
+}
+
+function viewJournal(){
+  const g = active();
+  const all = logsOf(g.id);
+  const logs = journalFilter === 'all' ? all : all.filter(l => l.t === journalFilter);
+  const groups = [];
+  logs.slice(0, 400).forEach(l => { const k = sod(l.at); const last = groups[groups.length-1]; if (last && last.k === k) last.items.push(l); else groups.push({k, label: dayLabel(l.at), items:[l]}); });
+  const counts = {}; all.forEach(l => counts[l.t] = (counts[l.t]||0) + 1);
+  return `${topBar()}
+  <div class="title"><div><h1>Journal</h1><p class="sub">${plural(all.length,'entry','entries')} for ${esc(g.name)}</p></div>
+    <button class="btn btn-primary" type="button" data-act="add">${icon('plus',2.2)}Add</button></div>
+  <div class="filters" role="group" aria-label="Show">${[['all','Everything', all.length]].concat(Object.entries(TYPES).map(([k,t]) => [k, t.plural, counts[k]||0])).map(([k,n,c]) =>
+    `<button class="chip" type="button" data-act="filter" data-f="${k}" aria-pressed="${journalFilter === k}">${n} <span class="num" style="opacity:.62">${c}</span></button>`).join('')}</div>
+  ${groups.length ? groups.map(gr => `<h2 class="day">${gr.label}</h2><div class="list">${gr.items.map(l => entryRow(l)).join('')}</div>`).join('')
+    : `<div class="empty" style="margin-top:12px"><b>${journalFilter === 'all' ? 'No entries yet' : 'No ' + TYPES[journalFilter].plural.toLowerCase() + ' logged'}</b>Tap Add to log one.</div>`}`;
+}
+
+function niceTicks(min, max, count=4){
+  const span = max - min || 1;
+  const raw = span / count, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1,2,2.5,5,10].map(s => s*mag).find(s => s >= raw);
+  const lo = Math.floor(min/step)*step, hi = Math.ceil(max/step)*step;
+  const out = []; for (let v = lo; v <= hi + 1e-9; v += step) out.push(Math.round(v*100)/100);
+  return out;
+}
+const CH = {W:343, H:200, L:34, R:8, T:12, B:24};
+function weightChart(points){
+  if (points.length < 2) return `<div class="empty"><b>${points.length ? 'One weigh-in so far' : 'No weigh-ins in this range'}</b>Weigh at least twice to draw the growth line. A kitchen scale that reads grams works well.</div>`;
+  const {W,H,L,R,T,B} = CH;
+  const xs = points.map(p => +new Date(p.at)), ys = points.map(p => p.d.g);
+  let x0 = Math.min(...xs), x1 = Math.max(...xs); if (x0 === x1) x1 = x0 + DAY;
+  const ticks = niceTicks(Math.min(...ys)*.97, Math.max(...ys)*1.03);
+  const y0 = ticks[0], y1 = ticks[ticks.length-1];
+  const X = x => L + (x-x0)/(x1-x0)*(W-L-R), Y = y => T + (1-(y-y0)/(y1-y0))*(H-T-B);
+  const pts = points.map(p => [X(+new Date(p.at)), Y(p.d.g)]);
+  window.__chart = {pts: points, coords: pts, L, R, W};
+  const line = 'M' + pts.map(p => p.map(v => v.toFixed(1)).join(',')).join(' L');
+  const area = line + ` L${pts[pts.length-1][0].toFixed(1)},${H-B} L${pts[0][0].toFixed(1)},${H-B}Z`;
+  const xl = [x0, x0 + (x1-x0)/2, x1];
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight went from ${g1(ys[0])} g to ${g1(ys[ys.length-1])} g">
+    ${ticks.map(t => `<line class="grid" x1="${L}" x2="${W-R}" y1="${Y(t).toFixed(1)}" y2="${Y(t).toFixed(1)}"/><text class="tick" x="${L-6}" y="${(Y(t)+4).toFixed(1)}" text-anchor="end">${t}</text>`).join('')}
+    <line class="base" x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}"/>
+    ${xl.map((t,k) => `<text class="tick" x="${k === 0 ? L : k === 2 ? W-R : X(t).toFixed(1)}" y="${H-6}" text-anchor="${k === 0 ? 'start' : k === 2 ? 'end' : 'middle'}">${fmtShort.format(new Date(t))}</text>`).join('')}
+    <path class="area" d="${area}"/><path class="line" d="${line}"/>
+    <g id="whover" style="display:none"><line y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-dasharray="3 3"/><circle class="hover" r="5"/>
+      <rect rx="8" height="36" width="98" fill="var(--primary)"/><text fill="var(--on-primary)" font-size="13" font-weight="600"></text><text fill="var(--on-primary)" font-size="11" opacity=".8"></text></g>
+    <rect class="hit" x="${L}" y="0" width="${W-L-R}" height="${H-B}" data-chart="w"/>
+  </svg>`;
+}
+
+function viewGrowth(){
+  const g = active();
+  const i = insights(g);
+  const cutoff = growthRange ? sod(Date.now()) - growthRange*DAY : 0;
+  const pts = i.weights.filter(w => +new Date(w.at) >= cutoff).slice().reverse();
+  const feeds30 = logsOf(g.id,'feed').filter(f => daysSince(f.at) < 30);
+  const eaten = feeds30.filter(f => f.d.ate !== 'none');
+  const bugs30 = eaten.reduce((s,f) => s + totalBugs(f.d), 0);
+  const byBug = {};
+  logsOf(g.id,'feed').filter(f => f.d.ate !== 'none').forEach(f => (f.d.items||[]).forEach(it => byBug[it.bug] = (byBug[it.bug]||0) + (+it.n||0)));
+  const bugRows = Object.entries(byBug).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const bugMax = bugRows.length ? bugRows[0][1] : 1;
+  const ch = pts.length > 1 ? Math.round((pts[pts.length-1].d.g - pts[0].d.g)*10)/10 : null;
+  const rangeName = {30:'last month', 90:'last 3 months', 365:'last year', 0:'whole log'}[growthRange];
+  const [lo, hi] = i.st.range;
+  const inRange = i.lastW ? (i.lastW.d.g < lo ? 'below' : i.lastW.d.g > hi ? 'above' : 'within') : null;
+
+  const meals = mealsByDay(g.id);
+  const today = sod(Date.now());
+  const dow = (new Date(today).getDay() + 6) % 7;
+  const start = today - (11*7 + dow)*DAY;
+  let cal = '';
+  for (let r = 0; r < 7; r++){
+    cal += `<span class="dl" aria-hidden="true">${fmtWk.format(new Date(start + r*DAY))}</span>`;
+    for (let c = 0; c < 12; c++){
+      const t = start + (c*7 + r)*DAY, m = meals[t];
+      cal += t > today ? '<span></span>' : `<svg viewBox="0 0 22 22" role="img" aria-label="${esc(fmtDay.format(new Date(t)) + ': ' + (m ? (m.kind === 'r' ? 'refused' : m.kind === 'p' ? 'ate some' : 'ate') : 'no meal'))}">${spot(m ? m.kind : '', t/DAY|0, 22)}${t === today ? '<circle cx="11" cy="11" r="10" fill="none" stroke="var(--spot)" stroke-width="1.5" stroke-dasharray="2 2"/>' : ''}</svg>`;
+    }
+  }
+  const sheds = logsOf(g.id,'shed').filter(s => s.d.result !== 'pale');
+  const clean = sheds.filter(s => s.d.result === 'clean').length;
+  const photos = logsOf(g.id,'photo');
+
+  return `${topBar()}
+  <div class="title"><div><h1>Growth</h1><p class="sub">${esc(g.name)}, ${esc(ageText(g) || i.st.name.toLowerCase())}</p></div></div>
+  <section aria-labelledby="h-ph" style="margin-bottom:32px">
+    <div class="sec-head"><h2 id="h-ph">Growing up</h2>${photos.length ? `<button class="link" type="button" data-act="timeline">${photos.length > 6 ? 'See all ' + photos.length : 'Timeline'}</button>` : ''}</div>
+    ${photos.length ? `<div class="pgrid">${photos.slice(0,6).map(l => `<button class="ph" type="button" data-act="timeline" data-id="${l.id}" aria-label="${esc(dayLabel(l.at) + (l.note ? ', ' + l.note : ''))}"><img data-pid="${l.d.pid}" alt="" width="120" height="120"><span>${esc(ageAt(g, l.at) ? ageAt(g, l.at).replace(' old','') : fmtShort.format(new Date(l.at)))}</span></button>`).join('')}
+      ${photos.length < 6 && photos.length % 3 ? `<button class="ph add" type="button" data-act="log" data-type="photo">${icon('plus',2)}<span>Add</span></button>` : ''}</div>`
+      : `<div class="empty"><b>Start ${esc(g.name)}’s photo timeline</b>One photo every few weeks shows how much they grow. Each one is saved with their age and weight.<div style="margin-top:12px"><button class="btn btn-primary" type="button" data-act="log" data-type="photo">${icon('photo')}Add a photo</button></div></div>`}
+  </section>
+  <section aria-labelledby="h-w">
+    <div class="sec-head"><h2 id="h-w">Weight</h2>
+      <div class="seg" role="group" aria-label="Time range">${[[30,'1M'],[90,'3M'],[365,'1Y'],[0,'All']].map(([d,n]) => `<button type="button" data-act="range" data-d="${d}" aria-pressed="${growthRange === d}">${n}</button>`).join('')}</div></div>
+    <p style="margin:0 2px 12px">${i.lastW ? `<b class="num" style="font-size:30px;font-weight:600;letter-spacing:-.02em">${g1(i.lastW.d.g)} g</b><br><span class="muted" style="font-size:14px">${ch != null ? `${ch > 0 ? '+' : ch < 0 ? '−' : '±'}${g1(Math.abs(ch))} g over the ${rangeName}` : 'Weighed ' + ago(i.lastW.at)}</span>` : '<span class="muted">No weigh-ins yet</span>'}</p>
+    ${weightChart(pts)}
+    ${inRange ? `<p class="help">Most ${i.st.name.toLowerCase()}s weigh ${lo} to ${hi} g, and ${esc(g.name)} is ${inRange} that. Steady gain matters more than the exact number.</p>` : ''}
+  </section>
+
+  <section class="sec" aria-labelledby="h-m">
+    <div class="sec-head"><h2 id="h-m">Meals</h2><span class="muted" style="font-size:13px">Last 12 weeks</span></div>
+    <div class="figs" style="margin-bottom:8px">
+      <div class="fig"><div class="k">Meals, 30 days</div><div class="v">${eaten.length}</div><div class="c">${feeds30.length - eaten.length ? plural(feeds30.length - eaten.length, 'refusal') : 'No refusals'}</div></div>
+      <div class="fig"><div class="k">Insects, 30 days</div><div class="v">${bugs30}</div><div class="c">${eaten.length ? nf1.format(bugs30/eaten.length) + ' per meal' : 'No meals yet'}</div></div>
+    </div>
+    <div class="cal" style="${skinVars(skinOf(g))}"><div class="cal-grid">${cal}</div>
+      <div class="key"><span><svg viewBox="0 0 16 16" aria-hidden="true">${spot('f',3,16)}</svg>Ate</span><span><svg viewBox="0 0 16 16" aria-hidden="true">${spot('p',4,16)}</svg>Ate some</span><span><svg viewBox="0 0 16 16" aria-hidden="true">${spot('r',5,16)}</svg>Refused</span></div></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-f">
+    <div class="sec-head"><h2 id="h-f">Favourite food</h2><span class="muted" style="font-size:13px">Insects eaten, all time</span></div>
+    ${bugRows.length ? `<div class="panel feeders">${bugRows.map(([id,n]) => `<div class="fr">${bugSvg(id)}<div><div style="font-weight:600">${bugName(id)}</div><div class="bar2"><i style="width:${Math.max(4, n/bugMax*100)}%"></i></div></div><span class="n">${n}</span></div>`).join('')}</div>`
+      : `<div class="empty"><b>No meals yet</b>Once you log a few, the insects ${esc(g.name)} eats most show up here.</div>`}
+  </section>
+
+  <section class="sec" aria-labelledby="h-s">
+    <div class="sec-head"><h2 id="h-s">Sheds</h2><span class="muted" style="font-size:13px">${sheds.length ? `${clean} of ${sheds.length} clean` : ''}</span></div>
+    ${sheds.length ? `<div class="list">${sheds.slice(0,6).map(l => entryRow(l, true)).join('')}</div>` : `<div class="empty"><b>No sheds logged</b>${i.st.name}s usually shed ${i.st.shed}.</div>`}
+  </section>`;
+}
+
+function viewGeckos(){
+  const guide = [
+    ['Feeding', `<ul><li><b>Hatchlings and juveniles:</b> most days, as many insects as they’ll eat in about 10 to 15 minutes.</li><li><b>Sub-adults:</b> every 1 to 2 days.</li><li><b>Adults (12 to 18 months and up):</b> every 2 to 4 days. Adults are easy to overfeed, so watch the tail.</li><li>An insect should be no longer than the space between the eyes. Gut-load feeders for a day before.</li><li>Superworms and waxworms are treats, not staples.</li></ul>`],
+    ['Supplements', `<ul><li><b>Plain calcium</b> (no D3) on most meals.</li><li><b>Calcium with D3</b> about weekly for young geckos and every 1 to 2 weeks for adults. Less if you run a UVB light, since UVB lets them make their own D3.</li><li><b>Multivitamin</b> about weekly for juveniles and every couple of weeks for adults.</li></ul>`],
+    ['Temperatures', `<ul><li><b>Warm hide floor:</b> about 30 to 35°C (88 to 95°F).</li><li><b>Cool side:</b> about 22 to 27°C (72 to 80°F).</li><li><b>Night:</b> can fall to around 18 to 22°C.</li><li>Run the heater on a thermostat, and check the floor under the warm hide with a probe or temperature gun.</li></ul>`],
+    ['Humidity and shedding', `<ul><li>Keep the tank fairly dry, around 30 to 50%.</li><li>Add a <b>humid hide</b> with damp moss or paper towel for sheds.</li><li>Going pale or grey means a shed is a day or two away. Most geckos eat their shed.</li><li>Afterwards, check the <b>toes, tail tip and eyes</b>. Stuck shed on toes can cut off blood flow.</li></ul>`],
+    ['Signs of a healthy gecko', `<ul><li>A plump tail, about as thick as the neck. A very fat tail can mean overfeeding.</li><li>Clear, bright eyes and complete sheds.</li><li>Hunts eagerly and uses both the warm and cool sides.</li><li>Firm brown poop with a white urate.</li><li>Never grab the tail. They can drop it, and it grows back different.</li></ul>`],
+    ['When to see a vet', `<ul><li>Steady weight loss of more than about 10%, or a thinning tail.</li><li>Not eating for a long stretch along with weight loss, rather than a shed or a cool-season slowdown.</li><li>Runny or bloody poop that keeps happening, or repeated regurgitation.</li><li>Stuck shed that won’t come off after a soak, swollen toes, or cloudy, sunken eyes.</li><li>Shaky legs, a soft jaw or trouble walking. These can be signs of metabolic bone disease.</li></ul>`],
+  ];
+  return `${topBar()}
+  <div class="title"><div><h1>Geckos</h1><p class="sub">${S.geckos.length === 1 ? 'One gecko' : plural(S.geckos.length,'gecko')} on this phone</p></div>
+    <button class="btn btn-primary" type="button" data-act="geckoForm">${icon('plus',2.2)}Add gecko</button></div>
+  <div class="panel"><div class="rows">${S.geckos.map(g => { const st = STAGES[stageOf(g)]; const w = logsOf(g.id,'weight')[0];
+    return `<button class="gk" type="button" data-act="geckoForm" data-id="${g.id}">${avatar(g)}<span style="min-width:0"><span class="n">${esc(g.name)}</span>
+      <span class="s">${esc([g.morph, g.sex === 'female' ? 'Female' : g.sex === 'male' ? 'Male' : null, ageText(g) || st.name].filter(Boolean).join(', '))}</span>
+      <span class="s">${w ? g1(w.d.g) + ' g. ' : ''}Fed ${feedEvery(g) === 1 ? 'daily' : 'every ' + feedEvery(g) + ' days'}</span></span>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${ICON.chev}</svg></button>`; }).join('')}</div></div>
+
+  <section class="sec" aria-labelledby="h-care">
+    <div class="sec-head"><h2 id="h-care">Care guide</h2></div>
+    ${guide.map(([t,c]) => `<details class="guide"><summary>${t}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${ICON.chev}</svg></summary><div class="body">${c}</div></details>`).join('')}
+    <p class="help" style="margin:10px 4px 0">General guidance from common care sheets, which don’t always agree. A reptile vet knows your gecko best.</p>
+  </section>
+
+  <section class="sec" aria-labelledby="h-pi">
+    <div class="sec-head"><h2 id="h-pi">Backup and reminders</h2></div>
+    <div class="panel" style="padding:0">
+      <div class="set"><div><div class="t" id="lab-sync">Back up to your Pi</div><div class="s" id="syncState">${esc(syncText())}</div></div>
+        <button class="switch" type="button" role="switch" aria-checked="${syncOn()}" aria-labelledby="lab-sync" data-act="syncToggle"></button></div>
+      ${syncOn() ? `<div class="set"><div><div class="t">Open on another device</div><div class="s">The link carries your log’s secret code. Only share it with yourself.</div></div><button class="btn btn-quiet" type="button" data-act="copyLink">Copy link</button></div>` : ''}
+      <div class="set"><div><div class="t" id="lab-rem">Daily reminder</div><div class="s">${S.settings.remind.on ? `At ${esc(S.settings.remind.time)}, only on days something is due` : 'Meals, D3 and weigh-ins, sent by your Pi'}</div></div>
+        <button class="switch" type="button" role="switch" aria-checked="${!!S.settings.remind.on}" aria-labelledby="lab-rem" data-act="remindToggle"></button></div>
+      ${S.settings.remind.on ? `<div class="set"><label class="t" for="f-rtime">Reminder time</label><div style="display:flex;gap:8px;align-items:center"><input class="inp" id="f-rtime" type="time" value="${esc(S.settings.remind.time)}" style="width:120px;height:40px" data-remind-time="1"><button class="btn btn-quiet" type="button" data-act="testPush">Test</button></div></div>` : ''}
+    </div>
+    ${isIOS && !standalone() ? '<p class="help" style="margin:8px 4px 0">On iPhone, reminders work once Gecko Log is on your Home Screen.</p>' : ''}
+  </section>
+
+  <section class="sec" aria-labelledby="h-set">
+    <div class="sec-head"><h2 id="h-set">Settings</h2></div>
+    <div class="panel" style="padding:0">
+      <div class="set"><div class="t">Temperature</div><div class="seg" role="group" aria-label="Temperature unit">${['C','F'].map(u => `<button type="button" data-act="unit" data-u="${u}" aria-pressed="${S.settings.unit === u}">°${u}</button>`).join('')}</div></div>
+      <div class="set"><div class="t">Appearance</div><div class="seg" role="group" aria-label="Appearance">${[['auto','Auto'],['light','Light'],['dark','Dark']].map(([k,n]) => `<button type="button" data-act="theme" data-k="${k}" aria-pressed="${S.settings.theme === k}">${n}</button>`).join('')}</div></div>
+      <div class="set"><div><div class="t">Export a backup file</div><div class="s">${S.settings.lastBackup ? 'Last saved ' + ago(S.settings.lastBackup) : 'A copy you keep yourself (photos not included)'}</div></div><button class="btn btn-quiet" type="button" data-act="export">Export</button></div>
+      <div class="set"><div><div class="t">Restore a backup</div><div class="s">Replaces what’s on this phone</div></div><button class="btn btn-quiet" type="button" data-act="import">Import</button></div>
+    </div>
+  </section>
+  <section class="sec" aria-labelledby="h-erase">
+    <div class="sec-head"><h2 id="h-erase">Erase</h2></div>
+    <div class="panel" style="padding:0"><div class="set"><div><div class="t">Erase everything</div><div class="s">Deletes every gecko and entry on this phone</div></div><button class="btn btn-danger" type="button" data-act="wipe">Erase</button></div></div>
+  </section>`;
+}
+
+/* ================= sheet ================= */
+function openSheet(title, renderFn){
+  sheetRender = renderFn;
+  $('#sheetTitle').textContent = title;
+  drawSheet();
+  $('#sheetBody').scrollTop = 0;
+  if (!sheetOpen){
+    lastFocus = document.activeElement;
+    $('#scrim').classList.add('on'); $('#sheet').classList.add('on');
+    $('#view').setAttribute('inert',''); $('#nav').setAttribute('inert','');
+    sheetOpen = true;
+    history.pushState({sheet:true}, '', location.hash || '#' + view);
+    setTimeout(() => $('#sheet .x').focus({preventScroll:true}), 60);
+  }
+}
+function drawSheet(){
+  const {body, foot} = sheetRender();
+  $('#sheetBody').innerHTML = body;
+  $('#sheetFoot').innerHTML = foot;
+  hydratePhotos($('#sheetBody'));
+}
+function closeSheet(fromPop=false){
+  if (!sheetOpen) return;
+  $('#scrim').classList.remove('on'); $('#sheet').classList.remove('on');
+  $('#view').removeAttribute('inert'); $('#nav').removeAttribute('inert');
+  sheetOpen = false; F = null; confirmCb = null;
+  if (!fromPop && history.state && history.state.sheet){ skipPop = true; history.back(); }
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus({preventScroll:true});
+}
+
+function geckoPicker(){
+  if (S.geckos.length < 2) return '';
+  return `<div class="field" style="margin-top:4px"><span class="lab" id="lab-g">Gecko</span><div class="opts" role="group" aria-labelledby="lab-g">${S.geckos.map(g =>
+    `<button class="opt" type="button" data-act="fset" data-k="g" data-v="${g.id}" aria-pressed="${F.g === g.id}" style="padding-left:6px"><span class="av" style="width:32px;height:32px">${g.photo ? `<img src="${g.photo}" alt="" width="32" height="32">` : geckoFace(skinOf(g))}</span>${esc(g.name)}</button>`).join('')}</div></div>`;
+}
+const whenField = () => `<div class="field"><label for="f-at">When</label><input class="inp" id="f-at" name="when" type="datetime-local" value="${F.at}" data-in="at"></div>`;
+const noteField = (ph='Anything worth remembering…') => `<div class="field"><label for="f-note">Notes <span class="muted" style="font-weight:400">(optional)</span></label><textarea class="inp" id="f-note" name="note" data-in="note" placeholder="${ph}" autocomplete="off">${esc(F.note)}</textarea></div>`;
+const optGroup = (key, label, opts, extra) => `<div class="field"><span class="lab" id="lab-${key}">${label}</span><div class="opts" role="group" aria-labelledby="lab-${key}">${opts.map(o =>
+  `<button class="opt" type="button" data-act="fset" data-k="${key}" data-v="${o.id}"${typeof o.id === 'number' ? ' data-num="1"' : ''} aria-pressed="${String(F[key]) === String(o.id)}">${o.name}${extra ? extra(o) : ''}</button>`).join('')}</div></div>`;
+const footer = (isEdit, label) => `${isEdit ? `<button class="btn btn-danger" type="button" data-act="delLog">Delete</button>` : ''}<button class="btn btn-primary" type="button" data-act="saveLog">${label}</button>`;
+
+function openLog(type, existing, preset={}){
+  const g = active();
+  if (existing){
+    F = Object.assign({}, JSON.parse(JSON.stringify(existing.d)), {id:existing.id, g:existing.g, at:toLocalInput(existing.at), note:existing.note || '', t:type});
+    if (type === 'weight') F.gv = existing.d.g;
+  } else {
+    F = Object.assign({t:type, g:g.id, at:toLocalInput(Date.now()), note:''}, defaults(type, g), preset);
+  }
+  const labels = {feed:'Save meal', weight:'Save weight', shed:'Save shed', poop:'Save poop check', tank:'Save readings', note:'Save note', photo:'Save photo'};
+  openSheet(existing ? 'Edit ' + TYPES[type].name.toLowerCase() : TYPES[type].title, () => ({body: geckoPicker() + FORMS[type](), foot: footer(!!existing, existing ? 'Save changes' : labels[type])}));
+}
+function defaults(type, g){
+  const last = logsOf(g.id, type)[0];
+  switch (type){
+    case 'feed': return {items: last ? last.d.items.map(i => ({bug:i.bug, n:i.n})) : [{bug:'crickets', n:5}], dust: suggestDust(g), ate:'all'};
+    case 'weight': return {gv:'', tail:3};
+    case 'shed': return {result:'clean', spots:[], helped:false};
+    case 'poop': return {kind:'normal'};
+    case 'tank': return {warm:'', cool:'', hum:''};
+    case 'note': return {tag:'General'};
+    case 'photo': return {pid:null, blob:null};
+  }
+}
+
+const FORMS = {
+  photo(){
+    const g = gecko(F.g);
+    const shown = F.blob ? (F.preview || '') : '';
+    return `
+    <div class="field" style="margin-top:8px"><span class="lab sr">Photo</span>
+      <button class="shot" type="button" data-act="pickShot" aria-label="${F.blob || F.pid ? 'Change photo' : 'Choose a photo'}">
+        ${F.blob ? `<img src="${shown}" alt="">` : F.pid ? `<img data-pid="${F.pid}" alt="">` : `${icon('photo',1.6)}<span>Take or choose a photo</span>`}</button>
+      ${F.blob || F.pid ? `<p class="help" style="text-align:center">${esc([ageAt(g, F.at || new Date().toISOString()), weightNear(g, F.at ? new Date(F.at).toISOString() : new Date().toISOString()) != null ? g1(weightNear(g, new Date(F.at || Date.now()).toISOString())) + ' g' : null].filter(Boolean).join(', ') || 'Saved with the date, age and weight.')}</p>` : ''}</div>
+    <div class="field"><label for="f-note">Caption <span class="muted" style="font-weight:400">(optional)</span></label><input class="inp" id="f-note" name="caption" data-in="note" value="${esc(F.note)}" placeholder="First week home…" maxlength="80" autocomplete="off"></div>
+    ${whenField()}`;
+  },
+  feed(){
+    const g = gecko(F.g), sug = suggestDust(g), sel = F.items.map(i => i.bug);
+    return `
+    <div class="field" style="margin-top:8px"><span class="lab" id="lab-bugs">What did you offer?</span>
+      <div class="bugs" role="group" aria-labelledby="lab-bugs">${BUGS.map(b => `<button class="bug" type="button" data-act="bug" data-b="${b.id}" aria-pressed="${sel.includes(b.id)}">${bugSvg(b.id)}${b.short || b.name}</button>`).join('')}</div>
+      ${F.items.length ? `<div class="counts">${F.items.map(it => { const b = BUGS.find(x => x.id === it.bug);
+        return `<div class="count">${bugSvg(b.id)}<span class="nm">${b.name}${b.treat ? ' <span class="pill warn" style="margin-left:4px">Treat</span>' : ''}</span>
+          <button class="step" type="button" data-act="cnt" data-b="${b.id}" data-d="-1" aria-label="One fewer ${b.name.toLowerCase()}">${icon('minus',2.2)}</button>
+          <span class="n" aria-live="polite">${it.n}</span>
+          <button class="step" type="button" data-act="cnt" data-b="${b.id}" data-d="1" aria-label="One more ${b.name.toLowerCase()}">${icon('plus',2.2)}</button></div>`; }).join('')}</div>` : ''}
+    </div>
+    ${optGroup('dust', 'Dusted with', DUST, o => o.id === sug && sug !== 'cal' ? ' <span class="due">Due</span>' : '')}
+    ${sug !== 'cal' ? `<p class="help">${sug === 'd3' ? 'Calcium + D3' : 'Multivitamin'} is due for ${esc(g.name)}, so it’s picked for you.</p>` : ''}
+    ${optGroup('ate', 'How did it go?', ATE)}
+    ${F.ate === 'none' ? `<div class="tip warn">Skipped meals are common before a shed, in cooler months and in full adults. Check the warm side, and keep an eye on the tail and weight.</div>` : ''}
+    ${whenField()}${noteField()}`;
+  },
+  weight(){
+    const g = gecko(F.g), st = STAGES[stageOf(g)];
+    const last = logsOf(F.g, 'weight').find(w => w.id !== F.id);
+    return `
+    <div class="field" style="margin-top:8px"><label for="f-w" class="sr">Weight in grams</label>
+      <div class="big"><input id="f-w" name="weight" type="number" inputmode="decimal" step="0.1" min="0" max="500" placeholder="0" value="${esc(F.gv ?? '')}" data-in="gv" autocomplete="off" aria-describedby="w-help"><span aria-hidden="true">g</span></div>
+      <p class="help" id="w-help" style="text-align:center">${weightHelp(last, st)}</p></div>
+    <div class="field"><span class="lab" id="lab-tail">Tail</span>
+      <div class="tails" role="group" aria-labelledby="lab-tail">${TAILS.map((n,k) => `<button class="tail" type="button" data-act="fset" data-k="tail" data-v="${k+1}" data-num="1" aria-pressed="${F.tail === k+1}">${tailArt(k)}${n}</button>`).join('')}</div>
+      <p class="help">A healthy tail is about as thick as the neck.</p></div>
+    ${whenField()}${noteField('Before or after a meal…')}`;
+  },
+  shed(){
+    return `
+    ${optGroup('result', 'How is it going?', SHED)}
+    ${F.result === 'stuck' ? `
+      <div class="field"><span class="lab" id="lab-sp">Where is it stuck?</span><div class="opts" role="group" aria-labelledby="lab-sp">${SHED_SPOTS.map(s => `<button class="opt" type="button" data-act="spot" data-s="${s}" aria-pressed="${F.spots.includes(s)}">${s}</button>`).join('')}</div></div>
+      <div class="field"><button class="opt" type="button" data-act="fset" data-k="helped" data-v="${!F.helped}" data-bool="1" aria-pressed="${F.helped}">I helped with a soak or cotton bud</button></div>
+      <div class="tip neg">Stuck shed on toes can cut off blood flow. Give a warm, shallow soak for 15 to 20 minutes (or a damp paper-towel “sauna”), then roll it off gently with a damp cotton bud. Don’t pull. Keep the humid hide damp, and see a vet if it won’t come off.</div>` : ''}
+    ${F.result === 'pale' ? `<div class="tip">Going pale or grey means a shed is a day or two away. Dampen the humid hide. Skipping a meal now is normal.</div>` : ''}
+    ${F.result === 'clean' ? `<div class="tip">Check the toes, tail tip and eyes for any bits left behind.</div>` : ''}
+    ${whenField()}${noteField()}`;
+  },
+  poop(){
+    return `
+    <div class="field" style="margin-top:8px"><span class="lab" id="lab-pp">What did it look like?</span>
+      <div class="rows" role="group" aria-labelledby="lab-pp">${POOP.map(p => { const on = F.kind === p.id;
+        return `<button class="row" type="button" data-act="fset" data-k="kind" data-v="${p.id}" aria-pressed="${on}" style="background:${on ? 'var(--primary)' : 'var(--surface)'};color:${on ? 'var(--on-primary)' : 'inherit'}">
+        <span><span class="t">${p.name}</span><span class="s" style="color:inherit;opacity:.78">${p.s}</span></span></button>`; }).join('')}</div></div>
+    ${['runny','undigested','odd'].includes(F.kind) ? `<div class="tip warn">${F.kind === 'undigested' ? 'Undigested insects often mean the warm side is too cool for proper digestion. Check the floor temperature under the warm hide.' : 'One odd poop is usually nothing. If it keeps happening, check temperatures and ask a reptile vet about a fecal test for parasites.'}</div>` : ''}
+    ${whenField()}${noteField()}`;
+  },
+  tank(){
+    return `
+    <div class="field" style="margin-top:8px"><span class="lab">Readings</span>
+      <div class="readings">${reading('warm','Warm side',true)}${reading('cool','Cool side',true)}${reading('hum','Humidity',false)}</div>
+      <p class="help">Warm side means the floor under the warm hide. Humidity is the main tank, not the humid hide.</p></div>
+    ${whenField()}${noteField('New bulb, deep clean, moved décor…')}`;
+  },
+  note(){
+    return `
+    ${optGroup('tag', 'Kind of note', NOTE_TAGS.map(t => ({id:t, name:t})))}
+    <div class="field"><label for="f-note">Note</label><textarea class="inp" id="f-note" name="note" data-in="note" style="min-height:140px" placeholder="What happened…" autocomplete="off">${esc(F.note)}</textarea></div>
+    ${whenField()}`;
+  },
+};
+function weightHelp(last, st){
+  const v = parseFloat(F.gv);
+  if (!last) return `${st.name}s usually weigh ${st.range[0]} to ${st.range[1]} g.`;
+  let s = `Last time ${g1(last.d.g)} g, ${ago(last.at)}.`;
+  if (!isNaN(v) && v > 0){ const d = Math.round((v - last.d.g)*10)/10; s += d === 0 ? ' No change.' : ` That’s <b>${d > 0 ? '+' : '−'}${g1(Math.abs(d))} g</b>.`; }
+  return s;
+}
+function readingState(key){
+  const rng = TANK[key], conv = key !== 'hum';
+  const n = parseFloat(F[key]);
+  if (isNaN(n)) return {cls:'', msg:'Aim for ' + (conv ? `${cToU(rng[0])}–${cToU(rng[1])}°` : `${rng[0]}–${rng[1]}%`)};
+  const c = conv ? uToC(n) : n;
+  if (c < rng[0]) return {cls:'off', msg:'A bit low'};
+  if (c > rng[1]) return {cls:'off', msg:'A bit high'};
+  return {cls:'good', msg:'Looks right'};
+}
+function reading(key, label, conv){
+  const s = readingState(key);
+  return `<div class="reading ${s.cls}" data-box="${key}"><label for="f-${key}">${label}${conv ? '' : ''}</label>
+    <input id="f-${key}" name="${key}" type="number" inputmode="decimal" step="0.1" placeholder="–" value="${esc(F[key])}" data-in="${key}" autocomplete="off" aria-describedby="ok-${key}">
+    <div class="ok" id="ok-${key}">${s.msg}</div></div>`;
+}
+
+async function savePhoto(){
+  if (!F.blob && !F.pid){ toast('Choose a photo first.'); return; }
+  const btn = $('#sheetFoot .btn-primary'); if (btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  const pid = F.pid || ('p' + uid());
+  try {
+    if (F.blob){ await photoPut(pid, F.blob); await pendAdd(pid); photoUrls.delete(pid); }
+  } catch(e){ toast('Couldn’t store the photo. Phone storage may be full.'); if (btn){ btn.disabled = false; btn.textContent = 'Save photo'; } return; }
+  const at = F.at && !isNaN(new Date(F.at)) ? new Date(F.at).toISOString() : new Date().toISOString();
+  const entry = {id: F.id || uid(), g: F.g, t:'photo', at, d:{pid}, note:(F.note || '').trim()};
+  const idx = S.logs.findIndex(l => l.id === entry.id);
+  if (idx >= 0) S.logs[idx] = entry; else S.logs.push(entry);
+  if (F.preview) URL.revokeObjectURL(F.preview);
+  if (!save()) return;
+  const g = gecko(entry.g);
+  closeSheet();
+  if (idx < 0 && view !== 'growth') afterClose(() => showView('growth')); else render();
+  toast(idx >= 0 ? 'Changes saved' : `Added to ${g.name}’s timeline`);
+}
+function saveLog(){
+  const t = F.t, d = {};
+  if (t === 'photo') return savePhoto();
+  if (t === 'feed'){
+    d.items = F.items.filter(i => i.n > 0);
+    if (!d.items.length) return toast('Pick at least one insect.');
+    d.dust = F.dust; d.ate = F.ate;
+  }
+  if (t === 'weight'){
+    const v = parseFloat(F.gv);
+    if (!(v > 0) || v > 500){ toast('Enter a weight in grams, like 54.2.'); $('#f-w') && $('#f-w').focus(); return; }
+    d.g = Math.round(v*10)/10; d.tail = F.tail;
+  }
+  if (t === 'shed'){ d.result = F.result; if (F.result === 'stuck'){ d.spots = F.spots; d.helped = F.helped; } }
+  if (t === 'poop') d.kind = F.kind;
+  if (t === 'tank'){
+    const num = k => { const n = parseFloat(F[k]); return isNaN(n) ? null : n; };
+    d.warm = num('warm') != null ? uToC(num('warm')) : null;
+    d.cool = num('cool') != null ? uToC(num('cool')) : null;
+    d.hum = num('hum');
+    if (d.warm == null && d.cool == null && d.hum == null){ toast('Enter at least one reading.'); $('#f-warm') && $('#f-warm').focus(); return; }
+  }
+  if (t === 'note'){ d.tag = F.tag; if (!F.note.trim()){ toast('Write the note first.'); $('#f-note') && $('#f-note').focus(); return; } }
+  const at = F.at && !isNaN(new Date(F.at)) ? new Date(F.at).toISOString() : new Date().toISOString();
+  const entry = {id: F.id || uid(), g: F.g, t, at, d, note: (F.note || '').trim()};
+  const idx = S.logs.findIndex(l => l.id === entry.id);
+  if (idx >= 0) S.logs[idx] = entry; else S.logs.push(entry);
+  if (!save()) return;
+  const g = gecko(entry.g);
+  if (t === 'feed' && idx < 0){ newSpotDay = sod(at); mealSel = sod(at); S.settings.active = g.id; save(); }
+  const msg = idx >= 0 ? 'Changes saved' : {
+    feed: d.ate === 'none' ? `Refusal logged for ${g.name}` : `Meal logged for ${g.name}`,
+    weight: `${g.name} weighs ${g1(d.g)} g`,
+    shed: d.result === 'pale' ? 'Shed on its way' : d.result === 'stuck' ? 'Stuck shed logged' : 'Shed logged',
+    poop: 'Poop check saved', tank: 'Tank readings saved', note: 'Note saved'}[t];
+  const goToday = t === 'feed' && idx < 0 && view !== 'today';
+  closeSheet();
+  if (goToday){ newSpotDay = sod(at); afterClose(() => { showView('today'); }); } else render();
+  toast(msg);
+}
+
+let undoBuf = null;
+function deleteLog(id){
+  id = typeof id === 'string' ? id : F.id;
+  const l = S.logs.find(x => x.id === id);
+  S.logs = S.logs.filter(x => x.id !== id);
+  save(); closeSheet(); render();
+  undoBuf = l;
+  toast(l.t === 'photo' ? 'Photo deleted' : 'Entry deleted', 'Undo', () => { if (undoBuf){ S.logs.push(undoBuf); undoBuf = null; save(); render(); toast('Restored'); } });
+  // the picture itself goes once the undo window has passed
+  if (l.t === 'photo') setTimeout(async () => {
+    if (S.logs.some(x => x.d && x.d.pid === l.d.pid)) return;
+    try { await photoDel(l.d.pid); await pendDel(l.d.pid); } catch(e){}
+    if (syncOn()) fetch(apiUrl('photo/' + l.d.pid), {method:'DELETE'}).catch(() => {});
+  }, 7000);
+}
+
+/* photo timeline: every photo of the active gecko, oldest first, so it reads as growing up */
+function openTimeline(focusId){
+  const g = active();
+  openSheet(`${g.name} growing up`, () => {
+    const photos = logsOf(g.id, 'photo').slice().reverse();
+    return {
+      body: photos.length ? `<div class="tline">${photos.map(l => `<article class="tl-item" id="tl-${l.id}"><figure>
+          <div class="pic"><img data-pid="${l.d.pid}" alt="${esc(l.note || g.name + ' on ' + dayLabel(l.at))}" loading="lazy"></div>
+          <figcaption><div class="when">${esc(dayLabel(l.at))}</div><div class="meta">${esc(photoMeta(l, g) || '')}</div>${l.note ? `<p class="cap">${esc(l.note)}</p>` : ''}
+          <div class="acts"><button class="link" type="button" data-act="setProfile" data-pid="${l.d.pid}">Use as profile photo</button><button class="link" type="button" data-act="editPhoto" data-id="${l.id}">Edit</button></div></figcaption>
+        </figure></article>`).join('')}</div>` : '<div class="empty"><b>No photos yet</b></div>',
+      foot: `<button class="btn btn-primary btn-wide" type="button" data-act="log" data-type="photo">${icon('photo')}Add a photo</button>`
+    };
+  });
+  hydratePhotos($('#sheetBody'));
+  if (focusId) setTimeout(() => { const el = document.getElementById('tl-' + focusId); if (el) el.scrollIntoView({block:'start'}); }, 60);
+}
+async function useAsProfile(pid){
+  const u = await photoUrl(pid); if (!u) return;
+  const img = new Image();
+  img.onload = () => {
+    const size = 360, c = document.createElement('canvas'); c.width = c.height = size;
+    const m = Math.min(img.width, img.height);
+    c.getContext('2d').drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, size, size);
+    const g = active(); g.photo = c.toDataURL('image/jpeg', .82); save(); closeSheet(); render(); toast('Profile photo updated');
+  };
+  img.src = u;
+}
+
+/* gecko form */
+function openGecko(id){
+  const g = id ? gecko(id) : null;
+  F = g ? Object.assign({kind:'gecko'}, JSON.parse(JSON.stringify(g)), {feedEvery: g.feedEvery || 0, stage: g.stage || stageOf(g)})
+        : {kind:'gecko', name:'', morph:'', sex:'unknown', hatch:'', stage:'juvenile', feedEvery:0, photo:null};
+  openSheet(g ? 'Edit ' + g.name : S.geckos.length ? 'Add a gecko' : 'Your gecko', () => {
+    const st = F.hatch ? stageOf(F) : F.stage;
+    const autoN = STAGES[st].feed;
+    return {
+      body: `
+      <button class="photo" type="button" data-act="photo" aria-label="${F.photo ? 'Change photo' : 'Add a photo'}">${F.photo ? `<img src="${F.photo}" alt="" width="104" height="104">` : geckoFace(skinOf(F))}</button>
+      <p class="help" style="text-align:center;margin-top:2px"><button class="link" type="button" data-act="${F.photo ? 'rmPhoto' : 'photo'}">${F.photo ? 'Remove photo' : 'Add a photo'}</button></p>
+      <div class="field"><label for="f-name">Name</label><input class="inp" id="f-name" name="gecko-name" data-in="name" value="${esc(F.name)}" placeholder="Mochi…" maxlength="24" autocomplete="off" autocapitalize="words" spellcheck="false"></div>
+      <div class="field"><label for="f-morph">Morph <span class="muted" style="font-weight:400">(optional)</span></label><input class="inp" id="f-morph" name="morph" data-in="morph" value="${esc(F.morph)}" list="morphs" placeholder="Tangerine…" maxlength="40" autocomplete="off">
+        <datalist id="morphs">${MORPHS.map(m => `<option value="${m}">`).join('')}</datalist></div>
+      ${optGroup('sex', 'Sex', [{id:'female',name:'Female'},{id:'male',name:'Male'},{id:'unknown',name:'Not sure'}])}
+      <div class="field"><label for="f-hatch">Hatch date <span class="muted" style="font-weight:400">(optional)</span></label><input class="inp" id="f-hatch" name="hatch" type="date" data-in="hatch" data-redraw="1" value="${esc(F.hatch)}" max="${toLocalInput(Date.now()).slice(0,10)}">
+        ${F.hatch ? `<p class="help">That makes ${esc(F.name) || 'them'} ${ageText(F)}: a ${STAGES[st].name.toLowerCase()}.</p>` : ''}</div>
+      ${F.hatch ? '' : optGroup('stage', 'Or pick an age', Object.entries(STAGES).map(([k,v]) => ({id:k, name:v.name})))}
+      <div class="field"><span class="lab" id="lab-skin">Skin colours</span><div class="swatches" role="group" aria-labelledby="lab-skin">${[['', 'Match morph', skinOf({morph:F.morph})]].concat(Object.entries(SKINS).map(([k,c]) => [k, c.name, c])).map(([k,n,c]) =>
+        `<button class="swatch" type="button" data-act="fset" data-k="skin" data-v="${k}" aria-pressed="${(F.skin || '') === k}">${geckoFace(c)}${n}</button>`).join('')}</div>
+        <p class="help">Colours the yellow band, the meal spots and ${esc(F.name.trim()) || 'their'} face drawing.</p></div>
+      <div class="field"><span class="lab" id="lab-fe">Feeding schedule</span><div class="opts" role="group" aria-labelledby="lab-fe">${FEED_OPTS.map(([n,l]) => `<button class="opt" type="button" data-act="fset" data-k="feedEvery" data-v="${n}" data-num="1" aria-pressed="${F.feedEvery === n}">${n === 0 ? `Auto (${autoN === 1 ? 'daily' : 'every ' + autoN + ' days'})` : l}</button>`).join('')}</div>
+        <p class="help">Auto follows the usual guide for their age and changes as they grow.</p></div>`,
+      foot: `${g ? `<button class="btn btn-danger" type="button" data-act="delGecko">Remove</button>` : ''}<button class="btn btn-primary" type="button" data-act="saveGecko">${g ? 'Save changes' : 'Add ' + (esc(F.name.trim()) || 'gecko')}</button>`
+    };
+  });
+}
+function saveGecko(){
+  const name = (F.name || '').trim();
+  if (!name){ toast('Give your gecko a name.'); $('#f-name') && $('#f-name').focus(); return; }
+  const g = {id: F.id || uid(), name, morph:(F.morph||'').trim(), sex:F.sex, hatch:F.hatch || '', stage:F.hatch ? '' : F.stage, feedEvery:F.feedEvery || 0, skin:F.skin || '', photo:F.photo || null, created: F.created || new Date().toISOString()};
+  const idx = S.geckos.findIndex(x => x.id === g.id);
+  if (idx >= 0) S.geckos[idx] = g; else S.geckos.push(g);
+  S.settings.active = g.id;
+  if (!save()) return;
+  closeSheet();
+  if (idx < 0){ askPersist(); afterClose(() => showView('today')); } else render();
+  toast(idx >= 0 ? 'Changes saved' : `${g.name} added`);
+}
+function confirmSheet(title, text, okLabel, onYes){
+  const back = sheetOpen ? {render: sheetRender, title: $('#sheetTitle').textContent, F} : null;
+  openSheet(title, () => ({
+    body: `<p style="font-size:16px;margin-top:4px">${esc(text)}</p>`,
+    foot: `<button class="btn btn-quiet" type="button" data-act="confirmNo" style="flex:1">Keep it</button><button class="btn btn-danger" type="button" data-act="confirmYes" style="flex:1">${esc(okLabel)}</button>`
+  }));
+  confirmCb = yes => {
+    confirmCb = null;
+    if (yes){ onYes(); return; }
+    if (back){ F = back.F; sheetRender = back.render; $('#sheetTitle').textContent = back.title; drawSheet(); } else closeSheet();
+  };
+}
+function deleteGecko(){
+  const g = gecko(F.id), n = logsOf(g.id).length;
+  confirmSheet(`Remove ${g.name}?`, `This deletes ${g.name} and ${plural(n,'entry','entries')}. Export a backup first if you might want them back.`, `Remove ${g.name}`, () => {
+    S.geckos = S.geckos.filter(x => x.id !== g.id);
+    const pids = S.logs.filter(l => l.g === g.id && l.t === 'photo').map(l => l.d.pid);
+    pids.forEach(pid => { photoDel(pid).catch(() => {}); pendDel(pid).catch(() => {}); if (syncOn()) fetch(apiUrl('photo/' + pid), {method:'DELETE'}).catch(() => {}); });
+    S.logs = S.logs.filter(l => l.g !== g.id);
+    S.settings.active = S.geckos[0] ? S.geckos[0].id : null;
+    save(); closeSheet(); render(); toast(`${g.name} removed`);
+  });
+}
+
+function openAdd(){
+  const g = active();
+  const items = [['feed','Meal','meal'],['photo','Photo','photo'],['weight','Weigh-in','scale'],['shed','Shed','shed'],['poop','Poop','poop'],['tank','Tank check','temp'],['note','Note','note']];
+  openSheet(`Log for ${g.name}`, () => ({
+    body: `<div class="add-grid" style="${skinVars(skinOf(g))}">${items.map(([k,n,ic], i) => `<button type="button" class="${i === 0 ? 'wide' : ''}" data-act="log" data-type="${k}">${icon(ic)}<span>${n}</span></button>`).join('')}</div>
+      ${S.geckos.length > 1 ? '<p class="help">You can switch gecko on the next screen.</p>' : ''}`,
+    foot: `<button class="btn btn-quiet btn-wide" type="button" data-act="close">Cancel</button>`
+  }));
+}
+
+/* ================= toast ================= */
+let toastT;
+function toast(msg, actionLabel, action){
+  const t = $('#toast');
+  t.innerHTML = `<span class="msg">${esc(msg)}</span>${actionLabel ? `<button type="button" id="toastAct">${esc(actionLabel)}</button>` : ''}`;
+  if (actionLabel) $('#toastAct').onclick = () => { t.classList.remove('on'); action(); };
+  t.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), actionLabel ? 6000 : 2600);
+}
+
+/* ================= photo ================= */
+function pickPhoto(file){
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    const size = 360, c = document.createElement('canvas'); c.width = c.height = size;
+    const s = Math.min(img.width, img.height);
+    c.getContext('2d').drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, size, size);
+    F.photo = c.toDataURL('image/jpeg', .82); URL.revokeObjectURL(url); drawSheet();
+  };
+  img.onerror = () => toast('That image couldn’t be read. Try a JPEG or PNG.');
+  img.src = url;
+}
+
+/* ================= backup ================= */
+function exportData(){
+  S.settings.lastBackup = new Date().toISOString(); save();
+  const blob = new Blob([JSON.stringify(S, null, 1)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gecko-log-backup-${toLocalInput(Date.now()).slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  render(); toast('Backup saved to your downloads');
+}
+function importData(file){
+  const r = new FileReader();
+  r.onload = () => {
+    let d;
+    try { d = JSON.parse(r.result); if (!d || d.v !== 1 || !Array.isArray(d.geckos) || !Array.isArray(d.logs)) throw 0; }
+    catch(e){ toast('That file isn’t a Gecko Log backup.'); return; }
+    const apply = () => { const keep = {sync:S.settings.sync, remind:S.settings.remind}; S = Object.assign(blank(), d, {settings:Object.assign(blank().settings, d.settings, keep)}); save(); closeSheet(); afterClose(() => showView('today')); toast(`Restored ${plural(d.geckos.length,'gecko')} and ${plural(d.logs.length,'entry','entries')}`); };
+    if (!S.geckos.length) apply();
+    else confirmSheet('Replace this phone’s log?', `The backup has ${plural(d.geckos.length,'gecko')} and ${plural(d.logs.length,'entry','entries')}. It replaces everything here.`, 'Replace', apply);
+  };
+  r.readAsText(file);
+}
+async function askPersist(){ try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch(e){} }
+
+function applyTheme(){
+  const t = S.settings.theme;
+  if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+  const dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  const c = !S.geckos.length ? (dark ? '#f2bd3b' : '#f5c242') : dark ? '#121110' : '#ffffff';
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', c));
+}
+
+/* ================= routing ================= */
+function go(v){ if (v === view) { scrollTo({top:0, behavior:'smooth'}); return; } view = v; history.pushState(null, '', '#' + v); render(); scrollTo(0,0); $('#view').focus({preventScroll:true}); }
+function fromHash(){ const h = location.hash.slice(1); view = VIEWS.includes(h) ? h : 'today'; }
+// Closing a sheet pops its history entry asynchronously; anything that changes the page waits for that pop.
+let skipPop = false, afterPop = null;
+function afterClose(fn){ if (skipPop) afterPop = fn; else fn(); }
+function showView(v){ view = v; history.replaceState(null, '', '#' + v); render(); scrollTo(0,0); }
+addEventListener('popstate', () => {
+  if (skipPop){ skipPop = false; const f = afterPop; afterPop = null; if (f) f(); return; }
+  if (sheetOpen){ closeSheet(true); return; }
+  const prev = view; fromHash(); if (prev !== view) render();
+});
+
+/* ================= events ================= */
+const ACT = {
+  add: () => openAdd(),
+  close: () => { if (confirmCb) confirmCb(false); else closeSheet(); },
+  pick: el => { S.settings.active = el.dataset.id; mealSel = null; save(true); render(); },
+  log: el => openLog(el.dataset.type, null, el.dataset.dust ? {dust: el.dataset.dust} : {}),
+  edit: el => { const l = S.logs.find(x => x.id === el.dataset.id); if (l) openLog(l.t, l); },
+  meal: el => {
+    mealSel = +el.dataset.t;
+    document.querySelectorAll('.meal').forEach(b => b.setAttribute('aria-pressed', String(b === el)));
+    $('#mealSay').textContent = mealLine(mealSel, mealsByDay(active().id));
+  },
+  filter: el => { journalFilter = el.dataset.f; render(); },
+  range: el => { growthRange = +el.dataset.d; render(); },
+  fset: el => {
+    let v = el.dataset.v;
+    if (el.dataset.num) v = +v;
+    if (el.dataset.bool) v = v === 'true';
+    F[el.dataset.k] = v;
+    if (el.dataset.k === 'g' && F.t === 'feed') F.dust = suggestDust(gecko(v));
+    const key = el.dataset.k, val = el.dataset.v;
+    drawSheet();
+    const again = document.querySelector(`#sheet [data-k="${key}"][data-v="${CSS.escape(String(F[key]))}"]`) || document.querySelector(`#sheet [data-k="${key}"]`);
+    if (again && el.matches(':focus-visible, :focus')) again.focus({preventScroll:true});
+  },
+  bug: el => {
+    const id = el.dataset.b, i = F.items.findIndex(x => x.bug === id);
+    if (i >= 0) F.items.splice(i, 1); else F.items.push({bug:id, n: BUGS.find(b => b.id === id).treat ? 1 : 3});
+    drawSheet();
+    const again = document.querySelector(`#sheet [data-act="bug"][data-b="${id}"]`); if (again) again.focus({preventScroll:true});
+  },
+  cnt: el => {
+    const it = F.items.find(x => x.bug === el.dataset.b);
+    it.n = Math.max(0, Math.min(99, it.n + (+el.dataset.d)));
+    if (it.n === 0) F.items = F.items.filter(x => x !== it);
+    drawSheet();
+    const again = document.querySelector(`#sheet [data-act="cnt"][data-b="${el.dataset.b}"][data-d="${el.dataset.d}"]`);
+    if (again) again.focus({preventScroll:true});
+  },
+  spot: el => { const s = el.dataset.s; F.spots = F.spots.includes(s) ? F.spots.filter(x => x !== s) : F.spots.concat(s); drawSheet(); },
+  saveLog, delLog: deleteLog,
+  geckoForm: el => openGecko(el.dataset.id),
+  saveGecko, delGecko: deleteGecko,
+  photo: () => $('#filePhoto').click(),
+  rmPhoto: () => { F.photo = null; drawSheet(); },
+  confirmYes: () => confirmCb && confirmCb(true),
+  confirmNo: () => confirmCb && confirmCb(false),
+  unit: el => { S.settings.unit = el.dataset.u; save(true); render(); },
+  theme: el => { S.settings.theme = el.dataset.k; save(true); render(); },
+  export: exportData,
+  import: () => $('#fileImport').click(),
+  wipe: () => confirmSheet('Erase everything?', `Every gecko and all ${plural(S.logs.length,'entry','entries')} on this phone will be deleted. This can’t be undone.`, 'Erase everything', () => { S = blank(); save(); closeSheet(); afterClose(() => showView('today')); toast('Everything erased'); }),
+  install: async () => { if (!deferredInstall) return; deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; render(); },
+  hideInstall: () => { S.settings.hideInstall = true; save(true); render(); },
+  pickShot: () => $('#fileShot').click(),
+  viewPhoto: el => openTimeline(el.dataset.id),
+  timeline: el => openTimeline(el.dataset.id),
+  editPhoto: el => { const l = S.logs.find(x => x.id === el.dataset.id); if (l) openLog('photo', l); },
+  setProfile: el => useAsProfile(el.dataset.pid),
+  syncToggle: async el => {
+    const sy = S.settings.sync;
+    if (syncOn()){ sy.on = false; save(true); if (S.settings.remind.on) await disableReminders(); render(); toast('Pi backup turned off'); return; }
+    sy.on = true; sy.code = sy.code || newCode(); sy.error = null; save(true);
+    el.setAttribute('aria-checked','true');
+    const all = S.logs.filter(l => l.t === 'photo').map(l => l.d.pid);
+    for (const pid of all){ try { if (await photoGet(pid)) await pendAdd(pid); } catch(e){} }
+    await pushData(); render();
+    toast(S.settings.sync.error ? 'Backup is on, but the Pi didn’t answer yet' : 'Backed up to your Pi');
+  },
+  copyLink: async () => {
+    const link = location.origin + location.pathname + '#k=' + S.settings.sync.code;
+    try { await navigator.clipboard.writeText(link); toast('Link copied. Open it on your other device.'); }
+    catch(e){ prompt('Copy this link:', link); }
+  },
+  remindToggle: async el => {
+    if (S.settings.remind.on){ await disableReminders(); render(); toast('Reminders off'); return; }
+    el.setAttribute('aria-busy','true');
+    const ok = await enableReminders();
+    render();
+    if (ok) toast(`Reminders on for ${S.settings.remind.time}`);
+  },
+  testPush: async () => {
+    try { const r = await fetch(apiUrl('push/test'), {method:'POST'}); toast(r.ok ? 'Test sent. It should pop up in a few seconds.' : 'The Pi couldn’t send it. Try turning reminders off and on.'); }
+    catch(e){ toast('Couldn’t reach the Pi.'); }
+  },
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (el && ACT[el.dataset.act]){ e.preventDefault(); ACT[el.dataset.act](el, e); return; }
+  const a = e.target.closest('a[href^="#"]');
+  if (a && !a.classList.contains('skip')){ const v = a.getAttribute('href').slice(1); if (VIEWS.includes(v)){ e.preventDefault(); go(v); } }
+});
+document.addEventListener('input', e => {
+  const k = e.target.dataset && e.target.dataset.in;
+  if (!k || !F) return;
+  F[k] = e.target.value;
+  if (e.target.dataset.redraw){ const id = e.target.id; drawSheet(); const el = document.getElementById(id); if (el) el.focus({preventScroll:true}); return; }
+  if (F.t === 'weight' && k === 'gv'){ const g = gecko(F.g); $('#w-help').innerHTML = weightHelp(logsOf(F.g,'weight').find(w => w.id !== F.id), STAGES[stageOf(g)]); }
+  if (F.t === 'tank' && TANK[k]){ const s = readingState(k); document.querySelector(`[data-box="${k}"]`).className = 'reading ' + s.cls; $('#ok-' + k).textContent = s.msg; }
+  if (F.kind === 'gecko' && k === 'name'){ const b = $('#sheetFoot .btn-primary'); if (b && !F.id) b.textContent = 'Add ' + (F.name.trim() || 'gecko'); }
+});
+$('#filePhoto').addEventListener('change', e => { const f = e.target.files[0]; if (f) pickPhoto(f); e.target.value = ''; });
+$('#fileShot').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f || !F) return;
+  try { const b = await shrink(f); if (F.preview) URL.revokeObjectURL(F.preview); F.blob = b; F.preview = URL.createObjectURL(b); drawSheet(); }
+  catch(err){ toast('That photo couldn’t be read. Try a JPEG or PNG.'); }
+});
+document.addEventListener('change', async e => {
+  if (!e.target.dataset || !e.target.dataset.remindTime || !e.target.value) return;
+  S.settings.remind.time = e.target.value; save(true);
+  if (S.settings.remind.on){ const ok = await enableReminders(); if (ok) toast(`Reminder moved to ${e.target.value}`); render(); }
+});
+$('#fileImport').addEventListener('change', e => { const f = e.target.files[0]; if (f) importData(f); e.target.value = ''; });
+document.addEventListener('keydown', e => {
+  if (!sheetOpen) return;
+  if (e.key === 'Escape'){ ACT.close(); return; }
+  if (e.key === 'Tab'){
+    const f = [...$('#sheet').querySelectorAll('button,input,textarea,select')].filter(x => !x.disabled && x.offsetParent);
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]){ e.preventDefault(); f[f.length-1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length-1]){ e.preventDefault(); f[0].focus(); }
+  }
+  if (e.key === 'Enter' && e.target.matches('input')){ e.preventDefault(); const b = $('#sheetFoot .btn-primary'); b && b.click(); }
+});
+
+// Weight chart: show the nearest weigh-in under the finger or cursor.
+function chartHover(e){
+  const hit = e.target.closest && e.target.closest('[data-chart="w"]');
+  const hov = document.getElementById('whover');
+  if (!hov) return;
+  if (!hit || !window.__chart){ hov.style.display = 'none'; return; }
+  const svg = hit.ownerSVGElement, pt = svg.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  const x = pt.matrixTransform(svg.getScreenCTM().inverse()).x;
+  const {pts, coords, L, R, W} = window.__chart;
+  let k = 0; coords.forEach((c,j) => { if (Math.abs(c[0] - x) < Math.abs(coords[k][0] - x)) k = j; });
+  const [cx, cy] = coords[k];
+  hov.style.display = '';
+  const ln = hov.querySelector('line'); ln.setAttribute('x1', cx); ln.setAttribute('x2', cx);
+  const c = hov.querySelector('circle'); c.setAttribute('cx', cx); c.setAttribute('cy', cy);
+  const bx = Math.min(Math.max(cx - 49, L), W - R - 98), by = Math.max(cy - 48, 0);
+  const rc = hov.querySelector('rect'); rc.setAttribute('x', bx); rc.setAttribute('y', by);
+  const [t1, t2] = hov.querySelectorAll('text');
+  t1.setAttribute('x', bx + 10); t1.setAttribute('y', by + 16); t1.textContent = g1(pts[k].d.g) + ' g';
+  t2.setAttribute('x', bx + 10); t2.setAttribute('y', by + 29); t2.textContent = dayLabel(pts[k].at);
+}
+document.addEventListener('pointermove', chartHover);
+document.addEventListener('pointerdown', chartHover);
+
+// Drag the sheet's handle down to close (the close button does the same).
+(() => {
+  const sh = $('#sheet'); let y0 = null, dy = 0;
+  sh.addEventListener('touchstart', e => { if (!e.target.closest('.grab,.sheet-head')) return; y0 = e.touches[0].clientY; dy = 0; }, {passive:true});
+  sh.addEventListener('touchmove', e => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); sh.style.transition = 'none'; sh.style.transform = `translateY(${dy}px)`; }, {passive:true});
+  sh.addEventListener('touchend', () => { if (y0 == null) return; sh.style.transition = ''; sh.style.transform = ''; if (dy > 100) ACT.close(); y0 = null; });
+})();
+
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; if (view === 'today' && !sheetOpen && S.geckos.length) render(); });
+addEventListener('storage', e => { if (e.key === KEY){ S = load(); if (!sheetOpen) render(); } });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js?v=6').catch(() => {});
+let lastDay = sod(Date.now());
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden){ if (syncT){ clearTimeout(syncT); pushData(); } return; }
+  const changed = await pullData();
+  if ((changed || sod(Date.now()) !== lastDay) && !sheetOpen){ lastDay = sod(Date.now()); render(); }
+});
+
+// Boot. #k=<code> links this device to a log on the Pi; ?log=feed comes from the home-screen shortcut.
+const linkCode = (location.hash.match(/^#k=([a-f0-9]{32,64})$/) || [])[1];
+if (linkCode){
+  S.settings.sync = Object.assign(S.settings.sync || {}, {on:true, code:linkCode, error:null});
+  S.updatedAt = 0;   // let the Pi's copy win on this device
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+  history.replaceState(null, '', location.pathname + '#today');
+}
+fromHash();
+render();
+pullData().then(changed => { if (changed && !sheetOpen){ render(); if (linkCode) toast('Your log is on this device now'); } else if (linkCode && !S.geckos.length) toast('Couldn’t load that log. Check the link.'); });
+const q = new URLSearchParams(location.search).get('log');
+if (q && TYPES[q] && S.geckos.length){ history.replaceState(null, '', location.pathname + '#' + view); openLog(q); }
+</script>
+</body>
+</html>

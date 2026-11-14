@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "Gecko Log",
+  "short_name": "Gecko Log",
+  "description": "Meals, sheds, weigh-ins and tank checks for your leopard gecko.",
+  "start_url": "./#today",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5c242",
+  "theme_color": "#ffffff",
+  "categories": ["lifestyle", "health"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Log a meal", "short_name": "Meal", "url": "./?log=feed", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Log a weigh-in", "short_name": "Weigh", "url": "./?log=weight", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
+}
