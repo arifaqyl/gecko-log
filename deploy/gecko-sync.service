@@ -1,0 +1,21 @@
+# systemd unit for the optional sync + reminder service.
+# Install:  sudo cp deploy/gecko-sync.service /etc/systemd/system/ && sudo systemctl enable --now gecko-sync
+[Unit]
+Description=Gecko Log sync and reminders
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=gecko
+WorkingDirectory=/opt/gecko-log/server
+Environment=GECKO_DATA=/var/lib/gecko-log/data
+Environment=GECKO_PORT=8096
+ExecStart=/usr/bin/python3 /opt/gecko-log/server/gecko_sync.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/gecko-log
+
+[Install]
+WantedBy=multi-user.target
