@@ -1,6 +1,6 @@
 // Offline cache and reminders. When you change any file, bump VERSION here AND the ?v= on
 // register('sw.js?v=…') in index.html, so phones (and Cloudflare's cache) pick up the new worker.
-const VERSION = 'gecko-v6';
+const VERSION = 'gecko-v7';
 const FILES = ['./', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

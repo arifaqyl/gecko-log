@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Gecko Log</title>
 <meta name="description" content="Meals, sheds, weigh-ins and tank checks for your leopard gecko.">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -70,7 +70,7 @@
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;background:var(--ground)}
 /* Never let the page slide sideways on phones (iOS Safari pans the page if anything pokes out). */
-html,body{overflow-x:hidden;overscroll-behavior-x:none}
+html,body{overflow-x:hidden;overscroll-behavior-x:none;touch-action:pan-y}
 @supports (overflow-x:clip){html,body{overflow-x:clip}}
 @media (pointer: fine){html{overscroll-behavior:none}}
 body{margin:0;background:var(--ground);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.45;font-weight:400;
@@ -265,7 +265,7 @@ details.guide li{margin:6px 0}
 .x{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:none}
 .x:hover{background:var(--active)}
 .x svg{width:18px;height:18px}
-.sheet-body{overflow-y:auto;padding:4px 20px 20px;overscroll-behavior:contain}
+.sheet-body{overflow-y:auto;overflow-x:hidden;padding:4px 20px 20px;overscroll-behavior:contain;touch-action:pan-y}
 .sheet-foot{display:flex;gap:10px;padding:12px 20px calc(env(safe-area-inset-bottom) + 14px);box-shadow:inset 0 1px 0 var(--border)}
 .sheet-foot .btn-primary{flex:1}
 
@@ -274,6 +274,12 @@ details.guide li{margin:6px 0}
 .help{font-size:13px;color:var(--muted);margin-top:8px}
 .inp{width:100%;height:48px;background:var(--raised);border:1px solid var(--control);border-radius:12px;padding:0 14px;font-size:16px;transition:border-color var(--t-fast) linear}
 .inp:focus{border-color:var(--text);outline:none;box-shadow:0 0 0 1px var(--text)}
+input.inp[type="date"],input.inp[type="datetime-local"],input.inp[type="time"]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;
+  font-size:16px;line-height:46px;text-align:left;color:var(--text)}
+input.inp::-webkit-date-and-time-value{text-align:left;margin:0;min-height:1.4em}
+input.inp::-webkit-datetime-edit{padding:0}
+input.inp::-webkit-calendar-picker-indicator{opacity:.55}
+.field{min-width:0}
 textarea.inp{height:auto;min-height:88px;padding:12px 14px;resize:vertical;line-height:1.4}
 .inp::placeholder,.big input::placeholder,.reading input::placeholder{color:var(--muted);opacity:1}
 .opts{display:flex;flex-wrap:wrap;gap:8px}
@@ -1804,13 +1810,17 @@ document.addEventListener('pointerdown', chartHover);
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; if (view === 'today' && !sheetOpen && S.geckos.length) render(); });
 addEventListener('storage', e => { if (e.key === KEY){ S = load(); if (!sheetOpen) render(); } });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js?v=6').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js?v=7').catch(() => {});
 let lastDay = sod(Date.now());
 document.addEventListener('visibilitychange', async () => {
   if (document.hidden){ if (syncT){ clearTimeout(syncT); pushData(); } return; }
   const changed = await pullData();
   if ((changed || sod(Date.now()) !== lastDay) && !sheetOpen){ lastDay = sod(Date.now()); render(); }
 });
+
+// Feel like an app: iOS Safari ignores user-scalable=no, so stop its pinch gestures here.
+['gesturestart','gesturechange','gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), {passive:false}));
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, {passive:false});
 
 // Boot. #k=<code> links this device to a log on the Pi; ?log=feed comes from the home-screen shortcut.
 const linkCode = (location.hash.match(/^#k=([a-f0-9]{32,64})$/) || [])[1];
