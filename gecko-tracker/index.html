@@ -494,7 +494,7 @@ const POOP = [
 ];
 const NOTE_TAGS = ['General','Vet visit','Medication','Behaviour','Cleaning','Handling'];
 const TAILS = ['Skinny','Slim','Healthy','Chunky','Very chunky'];
-const MORPHS = ['Normal','High Yellow','Tangerine','Mack Snow','Super Snow','Tremper Albino','Bell Albino','Rainwater Albino','Blizzard','Murphy Patternless','Enigma','Raptor','Eclipse','Black Night','Lemon Frost','Bold Stripe','Jungle','Giant','Hypo','Carrot Tail'];
+const MORPHS = ['Normal','High Yellow','Tangerine','Mack Snow','Super Snow','Tremper Albino','Tremper Eclipse','Bell Albino','Rainwater Albino','Emerine','Blizzard','Murphy Patternless','Enigma','Raptor','Eclipse','Black Night','Lemon Frost','Bold Stripe','Jungle','Giant','Hypo','Carrot Tail'];
 // Ballpark guide numbers (PetMD life-stage table and common care sheets). Stage sets the defaults.
 const STAGES = {
   hatchling: {name:'Hatchling', feed:1, weigh:7,  d3:7,  multi:7,  range:[2,15],  shed:'about once a week'},
@@ -1810,7 +1810,7 @@ document.addEventListener('pointerdown', chartHover);
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; if (view === 'today' && !sheetOpen && S.geckos.length) render(); });
 addEventListener('storage', e => { if (e.key === KEY){ S = load(); if (!sheetOpen) render(); } });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js?v=7').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js?v=8').catch(() => {});
 let lastDay = sod(Date.now());
 document.addEventListener('visibilitychange', async () => {
   if (document.hidden){ if (syncT){ clearTimeout(syncT); pushData(); } return; }

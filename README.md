@@ -1,11 +1,11 @@
 # Gecko Log
 
-A phone app for looking after a leopard gecko: meals, supplements, weigh-ins, sheds, tank temperatures, poop checks, notes and a photo timeline. Built for Nugget, my albino leopard gecko.
+A phone app for looking after a leopard gecko: meals, supplements, weigh-ins, sheds, tank temperatures, poop checks, notes and a photo timeline. Built for Nugget, my Tremper Eclipse leopard gecko.
 
 Live at **[arifaqyl.me/gecko](https://arifaqyl.me/gecko/)**. Open it on a phone and add it to the home screen. It installs like an app and works offline.
 
 <p>
-  <img src="docs/today.png" width="260" alt="Today screen: Nugget's name on a band of albino-coloured skin, where every dark spot is a meal from the last two weeks, with the next things due below">
+  <img src="docs/today.png" width="260" alt="Today screen: Nugget's name on a band of pale orange skin like hers, where every dark spot is a meal from the last two weeks, with the next things due below">
   <img src="docs/meal.png" width="260" alt="Log a meal sheet: line drawings of each feeder insect, counts, dusting and whether she ate">
   <img src="docs/growth.png" width="260" alt="Growth screen: a weight line over three months and a 12-week meal calendar drawn as leopard spots">
 </p>
