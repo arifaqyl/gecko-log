@@ -78,6 +78,8 @@ body{margin:0;background:var(--ground);color:var(--text);font-family:var(--font)
 h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
 p{margin:0}
 button,input,textarea,select{font:inherit;color:inherit}
+/* iPhone zooms in on any field under 16px when it is tapped. */
+input,textarea,select{font-size:16px}
 button{background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
 a{color:inherit}
 :focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:8px}
@@ -417,6 +419,11 @@ textarea.inp{height:auto;min-height:88px;padding:12px 14px;resize:vertical;line-
 <input type="file" id="fileImport" accept="application/json,.json" hidden>
 
 <script>
+// An app, not a page. iPhone Safari ignores user-scalable=no, so block the
+// pinch itself; double-tap zoom is already off via touch-action.
+['gesturestart', 'gesturechange', 'gestureend'].forEach(t =>
+  document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 'use strict';
 /* ================= constants ================= */
 const KEY = 'geckolog.v1';
@@ -1810,7 +1817,7 @@ document.addEventListener('pointerdown', chartHover);
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; if (view === 'today' && !sheetOpen && S.geckos.length) render(); });
 addEventListener('storage', e => { if (e.key === KEY){ S = load(); if (!sheetOpen) render(); } });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js?v=8').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js?v=9').catch(() => {});
 let lastDay = sod(Date.now());
 document.addEventListener('visibilitychange', async () => {
   if (document.hidden){ if (syncT){ clearTimeout(syncT); pushData(); } return; }
